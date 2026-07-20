@@ -1,7 +1,10 @@
 module Onboarding
-  # Stands in for the real CV text-extraction parser (pdf-reader/docx, not built yet). Confirms the
-  # uploaded file is actually readable and reports success/failure through CandidateDocument#parsing_status
-  # — real field-extraction logic can replace the body of #call later without touching callers.
+  # Extracts text from the uploaded CV (Onboarding::CvParsing::TextExtractor), pulls structured
+  # fields out of it (Onboarding::CvParsing::FieldExtractor), and pre-fills the candidate's profile
+  # with them (Onboarding::CvParsing::ProfileMapper). Reports success/failure through
+  # CandidateDocument#parsing_status; any failure anywhere in the pipeline (unreadable file, no
+  # extractable text, a mapper error) degrades to parsing_status: :failed, which the UI turns into
+  # the manual-fill fallback rather than blocking the candidate.
   class CvParsingService
     class UnreadableFileError < StandardError; end
 
@@ -15,6 +18,12 @@ module Onboarding
 
       content = candidate_document.file.download
       raise UnreadableFileError, "downloaded file is empty" if content.blank?
+
+      text = CvParsing::TextExtractor.new(content_type: candidate_document.file.blob.content_type, content: content).call
+      raise UnreadableFileError, "no extractable text found" if text.blank?
+
+      extracted_fields = CvParsing::FieldExtractor.new(text).call
+      CvParsing::ProfileMapper.new(candidate_document, extracted_fields).call
 
       candidate_document.update!(parsing_status: :completed, parsed_at: Time.current)
     rescue StandardError => e

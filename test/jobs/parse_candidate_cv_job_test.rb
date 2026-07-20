@@ -3,7 +3,11 @@ require "test_helper"
 class ParseCandidateCvJobTest < ActiveJob::TestCase
   test "delegates to Onboarding::CvParsingService for the given document" do
     document = onboarding_candidate_profiles(:draft_profile).candidate_documents.build(document_type: :cv)
-    document.file.attach(io: StringIO.new("%PDF-1.4\nreal content"), filename: "cv.pdf", content_type: "application/pdf")
+    document.file.attach(
+      io: file_fixture("cvs/sample_cv.docx").open,
+      filename: "cv.docx",
+      content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
     document.save!
 
     perform_enqueued_jobs do

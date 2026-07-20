@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_154545) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_180120) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -109,6 +109,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_154545) do
     t.index ["skill_id"], name: "index_onboarding_candidate_skills_on_skill_id"
   end
 
+  create_table "onboarding_cv_extraction_aliases", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "field", null: false
+    t.integer "match_type", default: 0, null: false
+    t.string "pattern", null: false
+    t.datetime "updated_at", null: false
+    t.string "value", null: false
+    t.index ["field", "pattern", "match_type"], name: "index_cv_extraction_aliases_on_field_pattern_match_type", unique: true
+  end
+
+  create_table "onboarding_cv_field_extractions", force: :cascade do |t|
+    t.bigint "candidate_document_id", null: false
+    t.integer "confidence", null: false
+    t.datetime "created_at", null: false
+    t.text "extracted_value"
+    t.string "field", null: false
+    t.string "matched_pattern"
+    t.datetime "updated_at", null: false
+    t.index ["candidate_document_id"], name: "index_onboarding_cv_field_extractions_on_candidate_document_id"
+  end
+
   create_table "onboarding_educations", force: :cascade do |t|
     t.bigint "candidate_profile_id", null: false
     t.datetime "created_at", null: false
@@ -170,6 +191,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_154545) do
   add_foreign_key "onboarding_candidate_profiles", "users"
   add_foreign_key "onboarding_candidate_skills", "onboarding_candidate_profiles", column: "candidate_profile_id"
   add_foreign_key "onboarding_candidate_skills", "onboarding_skills", column: "skill_id"
+  add_foreign_key "onboarding_cv_field_extractions", "onboarding_candidate_documents", column: "candidate_document_id"
   add_foreign_key "onboarding_educations", "onboarding_candidate_profiles", column: "candidate_profile_id"
   add_foreign_key "onboarding_work_experiences", "onboarding_candidate_profiles", column: "candidate_profile_id"
 end

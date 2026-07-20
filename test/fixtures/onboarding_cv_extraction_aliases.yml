@@ -1,0 +1,32 @@
+_fixture:
+  model_class: Onboarding::CvExtractionAlias
+
+tandarts_exact:
+  field: job_function
+  pattern: tandarts
+  value: general_dentist
+  match_type: exact
+
+dentist_keyword:
+  field: job_function
+  pattern: dentist
+  value: general_dentist
+  match_type: keyword
+
+dental_assistant_keyword:
+  field: job_function
+  pattern: dental assistant
+  value: dental_assistant
+  match_type: keyword
+
+amsterdam_city:
+  field: city
+  pattern: amsterdam
+  value: Amsterdam
+  match_type: exact
+
+netherlands_country:
+  field: country
+  pattern: netherlands
+  value: Netherlands
+  match_type: exact

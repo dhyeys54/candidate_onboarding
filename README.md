@@ -24,6 +24,31 @@ features should be built toward.
 Requirements: Ruby 4.0.6 (as pinned in `.ruby-version`), a running PostgreSQL server, and a running
 Redis server (defaults to `redis://localhost:6379/0`; override with `REDIS_URL`).
 
+CV parsing extracts text from PDF and `.docx` with pure-Ruby gems (`pdf-reader`, `docx`), but legacy
+`.doc` files need the `antiword` system binary on `PATH`. It's baked into the Docker image via `apt-get`
+(Debian package `antiword`). For local dev it isn't packaged in Homebrew — build it from source instead:
+
+```
+git clone https://github.com/grobian/antiword.git
+cd antiword && make && make install
+```
+
+`make install` puts the binary in `~/bin` and its character-mapping resources in `~/.antiword` (no sudo
+needed). Add both to your shell profile:
+
+```
+export PATH="$HOME/bin:$PATH"
+export ANTIWORDHOME="$HOME/.antiword"
+```
+
+If `antiword` is missing or fails on a given file, `.doc` parsing just fails for that upload and the UI
+falls back to manual form entry — it's not a hard dependency for the app to run.
+
+CV parsing extracts text from PDF and `.docx` with pure-Ruby gems (`pdf-reader`, `docx`), but legacy
+`.doc` files need the `antiword` system binary on `PATH`. Install it locally (`brew install antiword`
+on macOS, `apt-get install antiword` on Debian/Ubuntu) — it's already baked into the Docker image. If
+it's missing, `.doc` uploads still work, they just fail parsing and fall back to manual form entry.
+
 ```
 bin/setup
 ```
