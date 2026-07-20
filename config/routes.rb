@@ -14,6 +14,11 @@ Rails.application.routes.draw do
 
   mount Sidekiq::Web, at: "/sidekiq"
 
+  # Onboarding namespace: candidate-facing CV upload/parse/review flow (the core product surface).
+  namespace :onboarding do
+    resources :candidates, only: [ :index ]
+  end
+
   # Admin namespace: staff-only, HTTP Basic Auth via Admin::BaseController (ADMIN_USERNAME/ADMIN_PASSWORD).
   # No routes yet — admin controllers/views land in a later step.
   namespace :admin do
@@ -27,6 +32,6 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # Candidates land here first to upload their CV.
+  root "onboarding/candidates#index"
 end

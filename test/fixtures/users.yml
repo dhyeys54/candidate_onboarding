@@ -1,3 +1,6 @@
+_fixture:
+  model_class: Base::User
+
 guest_one:
   first_name: Alex
   last_name: Guest
