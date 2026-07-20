@@ -5,6 +5,9 @@ module Onboarding
     end
 
     def create
+      validation_errors = Onboarding::UploadCvService.validate(params[:cv])
+      return render_upload_error(validation_errors.to_sentence) if validation_errors.any?
+
       profile_result = Onboarding::CreateGuestCandidateProfileService.new.call
 
       unless profile_result.success?

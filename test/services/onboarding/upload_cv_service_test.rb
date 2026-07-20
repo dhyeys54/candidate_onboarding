@@ -65,4 +65,20 @@ class Onboarding::UploadCvServiceTest < ActiveSupport::TestCase
     assert_not result.success?
     assert_includes result.errors.join, "choose a CV file"
   end
+
+  test "fails instead of raising when the cv param is not an uploaded file" do
+    result = Onboarding::UploadCvService.new(candidate_profile: @candidate_profile, uploaded_file: "not-a-file").call
+
+    assert_not result.success?
+    assert_includes result.errors.join, "choose a CV file"
+  end
+
+  test ".validate returns no errors for a valid upload" do
+    assert_empty Onboarding::UploadCvService.validate(uploaded_file("sample_cv.pdf", content_type: "application/pdf"))
+  end
+
+  test ".validate is safe to call with a non-file value" do
+    assert_includes Onboarding::UploadCvService.validate("not-a-file").join, "choose a CV file"
+    assert_includes Onboarding::UploadCvService.validate(nil).join, "choose a CV file"
+  end
 end

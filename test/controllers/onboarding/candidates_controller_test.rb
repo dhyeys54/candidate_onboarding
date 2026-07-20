@@ -41,4 +41,23 @@ class Onboarding::CandidatesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_match(/choose a CV file/, flash[:alert])
   end
+
+  test "create with a disallowed content type does not create a guest user or profile" do
+    assert_no_difference [ "Base::User.count", "Onboarding::CandidateProfile.count" ] do
+      post onboarding_candidates_path, params: { cv: uploaded_file("sample_cv.txt", content_type: "text/plain") }
+    end
+  end
+
+  test "create without a file does not create a guest user or profile" do
+    assert_no_difference [ "Base::User.count", "Onboarding::CandidateProfile.count" ] do
+      post onboarding_candidates_path, params: {}
+    end
+  end
+
+  test "create with a non-file cv param re-renders index with an error instead of raising" do
+    post onboarding_candidates_path, params: { cv: "not-a-file" }
+
+    assert_response :unprocessable_entity
+    assert_match(/choose a CV file/, flash[:alert])
+  end
 end
