@@ -44,6 +44,10 @@ bin/dev
 Runs Rails together with the Tailwind CSS watcher and a Sidekiq worker (see `Procfile.dev`). Requires a
 Redis server running locally (`REDIS_URL` defaults to `redis://localhost:6379/0`).
 
+The Sidekiq Web UI is mounted at `/sidekiq`, protected by HTTP Basic Auth. Set `SIDEKIQ_WEB_USERNAME` and
+`SIDEKIQ_WEB_PASSWORD` in the environment to enable access (unset in local dev means the check always
+fails closed, so the UI stays inaccessible until both are set).
+
 ## Tests
 
 ```

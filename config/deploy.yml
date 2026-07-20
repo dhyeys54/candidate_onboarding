@@ -40,6 +40,8 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
+    - SIDEKIQ_WEB_USERNAME
+    - SIDEKIQ_WEB_PASSWORD
   clear:
     # Set number of cores available to the application on each server (default: 1).
     # WEB_CONCURRENCY: 2
