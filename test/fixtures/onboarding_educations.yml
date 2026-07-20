@@ -1,0 +1,8 @@
+_fixture:
+  model_class: Onboarding::Education
+
+education_one:
+  candidate_profile: draft_profile
+  institution: University of Amsterdam
+  study: Dentistry
+  level: master

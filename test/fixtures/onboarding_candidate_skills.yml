@@ -1,0 +1,6 @@
+_fixture:
+  model_class: Onboarding::CandidateSkill
+
+candidate_skill_one:
+  candidate_profile: draft_profile
+  skill: endodontics

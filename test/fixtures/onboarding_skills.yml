@@ -1,0 +1,17 @@
+_fixture:
+  model_class: Onboarding::Skill
+
+endodontics:
+  name: Endodontics
+  job_function: general_dentist
+  active: true
+
+prevention_hygienist:
+  name: Prevention
+  job_function: dental_hygienist
+  active: true
+
+prevention_assistant_skill:
+  name: Prevention
+  job_function: dental_assistant
+  active: true

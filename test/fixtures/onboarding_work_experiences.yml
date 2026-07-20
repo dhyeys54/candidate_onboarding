@@ -1,0 +1,8 @@
+_fixture:
+  model_class: Onboarding::WorkExperience
+
+work_experience_one:
+  candidate_profile: draft_profile
+  job_title: Dentist
+  company_name: Smile Clinic
+  current_job: true

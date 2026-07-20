@@ -1,0 +1,7 @@
+_fixture:
+  model_class: Onboarding::CandidateLanguage
+
+candidate_language_one:
+  candidate_profile: draft_profile
+  language: english
+  proficiency: native

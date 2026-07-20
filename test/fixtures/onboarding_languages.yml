@@ -1,0 +1,10 @@
+_fixture:
+  model_class: Onboarding::Language
+
+english:
+  name: English
+  active: true
+
+dutch:
+  name: Dutch
+  active: true
