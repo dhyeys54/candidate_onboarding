@@ -29,6 +29,11 @@ module Onboarding
     has_many :languages, through: :candidate_languages, class_name: "Onboarding::Language"
     has_many :candidate_documents, class_name: "Onboarding::CandidateDocument", dependent: :destroy
 
+    accepts_nested_attributes_for :educations, allow_destroy: true, reject_if: :all_blank
+    accepts_nested_attributes_for :work_experiences, allow_destroy: true, reject_if: :all_blank
+    accepts_nested_attributes_for :candidate_skills, allow_destroy: true, reject_if: :all_blank
+    accepts_nested_attributes_for :candidate_languages, allow_destroy: true, reject_if: :all_blank
+
     validate :regions_are_valid
     validate :employment_types_are_valid
     validate :transport_types_are_valid

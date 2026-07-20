@@ -1,0 +1,16 @@
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div>
+    <%= form.label :desired_gross_salary, "Desired gross salary", class: form_label_class %>
+    <%= form.number_field :desired_gross_salary, min: 0, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :desired_percentage, "Desired percentage", class: form_label_class %>
+    <%= form.number_field :desired_percentage, min: 0, max: 100, step: 0.01, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :average_daily_revenue, class: form_label_class %>
+    <%= form.number_field :average_daily_revenue, min: 0, class: form_input_class %>
+  </div>
+</div>

@@ -1,0 +1,35 @@
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <%= fields_for :user, candidate_profile.user do |uf| %>
+    <div>
+      <%= uf.label :first_name, class: form_label_class %>
+      <%= uf.text_field :first_name, class: form_input_class %>
+    </div>
+
+    <div>
+      <%= uf.label :last_name, class: form_label_class %>
+      <%= uf.text_field :last_name, class: form_input_class %>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= uf.label :email, class: form_label_class %>
+      <%= uf.email_field :email, class: form_input_class %>
+    </div>
+  <% end %>
+
+  <div>
+    <%= field_label(form, :phone, candidate_profile: candidate_profile) %>
+    <%= form.text_field :phone, class: form_input_class %>
+  </div>
+
+  <div></div>
+
+  <div>
+    <%= field_label(form, :city, candidate_profile: candidate_profile) %>
+    <%= form.text_field :city, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= field_label(form, :country, candidate_profile: candidate_profile) %>
+    <%= form.text_field :country, class: form_input_class %>
+  </div>
+</div>

@@ -1,9 +1,41 @@
-<% content_for :title, "Your profile" %>
+<% content_for :title, "Your profile — #{@form.page.title}" %>
 
-<div class="w-full max-w-xl mx-auto text-center">
-  <h1 class="text-3xl font-semibold text-gray-900">Let's finish your profile</h1>
-  <p class="mt-3 text-lg text-gray-600">
-    The full profile form is coming soon. For now, this confirms your onboarding profile
-    (<span class="font-mono text-sm">#<%= @candidate_profile.id %></span>) is ready for it.
+<div class="w-full max-w-3xl mx-auto">
+  <h1 class="text-3xl font-semibold text-gray-900 text-center">Let's finish your profile</h1>
+  <p class="mt-2 text-sm text-gray-500 text-center">
+    We've pre-filled what we could from your CV — review and edit anything before continuing.
   </p>
+
+  <ol class="mt-8 flex flex-wrap items-center justify-center gap-x-2 gap-y-2">
+    <% @form.pages.each do |page| %>
+      <li class="flex items-center gap-2">
+        <span class="shrink-0 rounded-full px-3 py-1 text-xs font-medium <%= page == @form.page ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500" %>">
+          <%= page.title %>
+        </span>
+        <% unless page == @form.pages.last %>
+          <span class="h-px w-3 bg-gray-200" aria-hidden="true"></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+
+  <%= form_with model: @candidate_profile, url: onboarding_candidate_profile_path(@candidate_profile), method: :patch, scope: :candidate_profile do |form| %>
+    <%= hidden_field_tag :page, @form.page.key %>
+
+    <div class="mt-6 rounded-xl border border-gray-200 p-6">
+      <%= render @form.page.partial, form: form, candidate_profile: @candidate_profile %>
+    </div>
+
+    <div class="mt-6 flex items-center justify-between">
+      <% if @form.previous_page %>
+        <%= form.button "Back", name: "commit", value: "Back",
+              class: "inline-flex items-center rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50" %>
+      <% else %>
+        <span></span>
+      <% end %>
+
+      <%= form.button (@form.last_page? ? "Save" : "Continue"), name: "commit", value: "Continue",
+            class: "inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500" %>
+    </div>
+  <% end %>
 </div>

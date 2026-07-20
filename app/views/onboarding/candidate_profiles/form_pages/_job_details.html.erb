@@ -1,0 +1,25 @@
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div>
+    <%= field_label(form, :job_function, candidate_profile: candidate_profile) %>
+    <%= form.select :job_function,
+          Onboarding::CandidateProfile.job_functions.keys.map { |key| [ key.humanize, key ] },
+          { include_blank: true }, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :years_of_experience, class: form_label_class %>
+    <%= form.number_field :years_of_experience, min: 0, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :big_registration_status, class: form_label_class %>
+    <%= form.select :big_registration_status,
+          Onboarding::CandidateProfile.big_registration_statuses.keys.map { |key| [ key.humanize, key ] },
+          { include_blank: true }, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= field_label(form, :big_number, candidate_profile: candidate_profile) %>
+    <%= form.text_field :big_number, class: form_input_class %>
+  </div>
+</div>

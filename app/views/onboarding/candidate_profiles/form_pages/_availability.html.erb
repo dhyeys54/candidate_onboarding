@@ -1,0 +1,32 @@
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div>
+    <%= form.label :available_from, class: form_label_class %>
+    <%= form.date_field :available_from, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :search_status, class: form_label_class %>
+    <%= form.select :search_status,
+          Onboarding::CandidateProfile.search_statuses.keys.map { |key| [ key.humanize, key ] },
+          { include_blank: true }, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :notice_period, class: form_label_class %>
+    <%= form.text_field :notice_period, class: form_input_class %>
+  </div>
+
+  <div>
+    <span class="<%= form_label_class %>">Employment types</span>
+    <div class="mt-1 grid grid-cols-1 gap-2">
+      <% Onboarding::CandidateProfile::EMPLOYMENT_TYPES.each do |employment_type| %>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= check_box_tag "candidate_profile[employment_types][]", employment_type, candidate_profile.employment_types.include?(employment_type),
+                id: "candidate_profile_employment_types_#{employment_type}", class: "rounded border-gray-300" %>
+          <%= employment_type.humanize %>
+        </label>
+      <% end %>
+      <%= hidden_field_tag "candidate_profile[employment_types][]", "" %>
+    </div>
+  </div>
+</div>

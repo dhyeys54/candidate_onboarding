@@ -1,0 +1,17 @@
+<div data-controller="nested-fields">
+  <div data-nested-fields-target="list">
+    <% form.fields_for :work_experiences do |wf| %>
+      <%= render "onboarding/candidate_profiles/form_pages/work_experience_row", f: wf %>
+    <% end %>
+  </div>
+
+  <template data-nested-fields-target="template">
+    <%= form.fields_for :work_experiences, Onboarding::WorkExperience.new, child_index: "NEW_RECORD" do |wf| %>
+      <%= render "onboarding/candidate_profiles/form_pages/work_experience_row", f: wf %>
+    <% end %>
+  </template>
+
+  <button type="button" data-action="nested-fields#add" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+    + Add work experience
+  </button>
+</div>

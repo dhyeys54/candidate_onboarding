@@ -1,0 +1,73 @@
+<%
+  skills = candidate_profile.job_function.present? ? Onboarding::Skill.where(job_function: candidate_profile.job_function).order(:name) : Onboarding::Skill.none
+  languages = Onboarding::Language.where(active: true).order(:name)
+%>
+
+<div class="space-y-8">
+  <div>
+    <span class="<%= form_label_class %>">Skills</span>
+    <div class="mt-2" data-controller="nested-fields">
+      <div data-nested-fields-target="list">
+        <% form.fields_for :candidate_skills do |sf| %>
+          <%= render "onboarding/candidate_profiles/form_pages/candidate_skill_row", f: sf, skills: skills %>
+        <% end %>
+      </div>
+
+      <template data-nested-fields-target="template">
+        <%= form.fields_for :candidate_skills, Onboarding::CandidateSkill.new, child_index: "NEW_RECORD" do |sf| %>
+          <%= render "onboarding/candidate_profiles/form_pages/candidate_skill_row", f: sf, skills: skills %>
+        <% end %>
+      </template>
+
+      <button type="button" data-action="nested-fields#add" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+        + Add skill
+      </button>
+    </div>
+  </div>
+
+  <div>
+    <span class="<%= form_label_class %>">Languages</span>
+    <div class="mt-2" data-controller="nested-fields">
+      <div data-nested-fields-target="list">
+        <% form.fields_for :candidate_languages do |lf| %>
+          <%= render "onboarding/candidate_profiles/form_pages/candidate_language_row", f: lf, languages: languages %>
+        <% end %>
+      </div>
+
+      <template data-nested-fields-target="template">
+        <%= form.fields_for :candidate_languages, Onboarding::CandidateLanguage.new, child_index: "NEW_RECORD" do |lf| %>
+          <%= render "onboarding/candidate_profiles/form_pages/candidate_language_row", f: lf, languages: languages %>
+        <% end %>
+      </template>
+
+      <button type="button" data-action="nested-fields#add" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+        + Add language
+      </button>
+    </div>
+  </div>
+
+  <div>
+    <%= field_label(form, :suggested_summary, candidate_profile: candidate_profile) %>
+    <%= form.text_area :suggested_summary, rows: 4, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :motivation_for_employer, class: form_label_class %>
+    <%= form.text_area :motivation_for_employer, rows: 3, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :reason_for_looking, class: form_label_class %>
+    <%= form.text_area :reason_for_looking, rows: 3, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :reason_for_change, class: form_label_class %>
+    <%= form.text_area :reason_for_change, rows: 3, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :internal_notes, "Anything else you'd like us to know", class: form_label_class %>
+    <%= form.text_area :internal_notes, rows: 3, class: form_input_class %>
+  </div>
+</div>

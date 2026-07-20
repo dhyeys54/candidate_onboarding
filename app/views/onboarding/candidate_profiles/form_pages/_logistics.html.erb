@@ -1,0 +1,48 @@
+<div class="grid grid-cols-1 gap-6">
+  <div>
+    <span class="<%= form_label_class %>">Regions</span>
+    <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <% Onboarding::CandidateProfile::REGIONS.each do |region| %>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= check_box_tag "candidate_profile[regions][]", region, candidate_profile.regions.include?(region),
+                id: "candidate_profile_regions_#{region}", class: "rounded border-gray-300" %>
+          <%= region.humanize %>
+        </label>
+      <% end %>
+      <%= hidden_field_tag "candidate_profile[regions][]", "" %>
+    </div>
+  </div>
+
+  <div>
+    <span class="<%= form_label_class %>">Transport</span>
+    <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <% Onboarding::CandidateProfile::TRANSPORT_TYPES.each do |transport_type| %>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= check_box_tag "candidate_profile[transport_types][]", transport_type, candidate_profile.transport_types.include?(transport_type),
+                id: "candidate_profile_transport_types_#{transport_type}", class: "rounded border-gray-300" %>
+          <%= transport_type.humanize %>
+        </label>
+      <% end %>
+      <%= hidden_field_tag "candidate_profile[transport_types][]", "" %>
+    </div>
+  </div>
+
+  <div>
+    <span class="<%= form_label_class %>">Working days</span>
+    <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <% Onboarding::CandidateProfile::WORKING_DAYS.each do |day| %>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= check_box_tag "candidate_profile[working_days][]", day, candidate_profile.working_days.include?(day),
+                id: "candidate_profile_working_days_#{day}", class: "rounded border-gray-300" %>
+          <%= day.humanize %>
+        </label>
+      <% end %>
+      <%= hidden_field_tag "candidate_profile[working_days][]", "" %>
+    </div>
+  </div>
+
+  <div class="sm:w-1/2">
+    <%= form.label :max_travel_time_minutes, "Max travel time (minutes)", class: form_label_class %>
+    <%= form.number_field :max_travel_time_minutes, min: 0, class: form_input_class %>
+  </div>
+</div>

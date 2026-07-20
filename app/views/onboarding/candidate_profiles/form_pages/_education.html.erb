@@ -1,0 +1,17 @@
+<div data-controller="nested-fields">
+  <div data-nested-fields-target="list">
+    <% form.fields_for :educations do |ef| %>
+      <%= render "onboarding/candidate_profiles/form_pages/education_row", f: ef %>
+    <% end %>
+  </div>
+
+  <template data-nested-fields-target="template">
+    <%= form.fields_for :educations, Onboarding::Education.new, child_index: "NEW_RECORD" do |ef| %>
+      <%= render "onboarding/candidate_profiles/form_pages/education_row", f: ef %>
+    <% end %>
+  </template>
+
+  <button type="button" data-action="nested-fields#add" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+    + Add education
+  </button>
+</div>
