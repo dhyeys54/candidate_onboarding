@@ -4,8 +4,8 @@
 # belong in git's global ignore instead:
 # `$XDG_CONFIG_HOME/git/ignore` or `~/.config/git/ignore`
 
-# Ignore bundler config.
-/.bundle
+# Ignore vendored gems installed via `bundle config path vendor/bundle`.
+/vendor/bundle
 
 # Ignore all environment files.
 /.env*
@@ -32,6 +32,10 @@
 
 # Ignore key files for decrypting credentials and more.
 /config/*.key
+
+# Ignore local database config (each checkout customizes username/password/host);
+# copy config/database.yml.example to config/database.yml to get started.
+/config/database.yml
 
 
 /app/assets/builds/*

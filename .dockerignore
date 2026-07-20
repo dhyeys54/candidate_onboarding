@@ -7,6 +7,10 @@
 # Ignore bundler config.
 /.bundle
 
+# Ignore vendored gems (installed locally via `bundle config path vendor/bundle`);
+# the image installs its own gems into BUNDLE_PATH for the container's platform.
+/vendor/bundle
+
 # Ignore all environment files.
 /.env*
 

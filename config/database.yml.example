@@ -19,9 +19,13 @@ default: &default
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
+test_idp: &test_idp
+  username: your_username
+  password: your_password
 
 development:
   <<: *default
+  <<: *test_idp
   database: dental_onboarding_development
 
   # The specified database role being used to connect to PostgreSQL.
@@ -56,6 +60,7 @@ development:
 # Do not set this db to the same as development or production.
 test:
   <<: *default
+  <<: *test_idp
   database: dental_onboarding_test
 
 # As with config/credentials.yml, you never want to store sensitive information,
@@ -94,10 +99,6 @@ production:
     <<: *primary_production
     database: dental_onboarding_production_cache
     migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: dental_onboarding_production_queue
-    migrations_paths: db/queue_migrate
   cable:
     <<: *primary_production
     database: dental_onboarding_production_cable
