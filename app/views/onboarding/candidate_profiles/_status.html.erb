@@ -1,0 +1,32 @@
+<div id="cv_status" class="mt-8 rounded-xl border border-gray-200 px-6 py-16">
+  <% case candidate_document&.parsing_status %>
+  <% when "completed" %>
+    <svg class="mx-auto size-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+    <p class="mt-4 text-lg font-medium text-gray-900">Your CV was parsed successfully</p>
+    <p class="mt-2 text-sm text-gray-600">We've pre-filled what we could from your CV.</p>
+    <%= link_to "Continue to your profile", edit_onboarding_candidate_profile_path(candidate_profile),
+          class: "mt-6 inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500" %>
+
+  <% when "failed" %>
+    <svg class="mx-auto size-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+    </svg>
+    <p class="mt-4 text-lg font-medium text-gray-900">We couldn't read your CV automatically</p>
+    <p class="mt-2 text-sm text-gray-600">
+      The file may be corrupted or in an unsupported format. No problem — you can still fill in
+      your profile yourself.
+    </p>
+    <%= link_to "Fill in the form manually", edit_onboarding_candidate_profile_path(candidate_profile),
+          class: "mt-6 inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500" %>
+
+  <% else %>
+    <svg class="mx-auto size-10 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z"></path>
+    </svg>
+    <p class="mt-4 text-lg font-medium text-gray-900">We're reading your CV&hellip;</p>
+    <p class="mt-2 text-sm text-gray-600">This usually takes just a few seconds.</p>
+  <% end %>
+</div>

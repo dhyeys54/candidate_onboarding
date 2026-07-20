@@ -7,30 +7,31 @@
     You can review and edit everything before saving.
   </p>
 
-  <div
-    data-controller="cv-dropzone"
-    data-cv-dropzone-active-class="border-indigo-500 bg-indigo-50"
-    class="mt-8 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-300 px-6 py-16 cursor-pointer transition-colors"
-    data-action="click->cv-dropzone#browse dragover->cv-dropzone#dragOver dragleave->cv-dropzone#dragLeave drop->cv-dropzone#drop"
-    data-cv-dropzone-target="dropzone"
-  >
-    <svg class="size-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-    </svg>
-
-    <p class="text-sm text-gray-700">
-      <span class="font-medium text-indigo-600">Click to upload</span> or drag and drop
-    </p>
-    <p class="text-xs text-gray-500">PDF, DOC, or DOCX — up to 25MB</p>
-    <p class="text-sm font-medium text-gray-900" data-cv-dropzone-target="filename"></p>
-
-    <input
-      type="file"
-      name="cv"
-      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      class="hidden"
-      data-cv-dropzone-target="input"
-      data-action="change->cv-dropzone#fileSelected"
+  <%= form_with url: onboarding_candidates_path, method: :post, multipart: true, data: { controller: "cv-dropzone", cv_dropzone_active_class: "border-indigo-500 bg-indigo-50", cv_dropzone_max_size_mb_value: @max_size_mb } do |form| %>
+    <div
+      class="mt-8 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-300 px-6 py-16 cursor-pointer transition-colors"
+      data-action="click->cv-dropzone#browse dragover->cv-dropzone#dragOver dragleave->cv-dropzone#dragLeave drop->cv-dropzone#drop"
+      data-cv-dropzone-target="dropzone"
     >
-  </div>
+      <svg class="size-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+      </svg>
+
+      <p class="text-sm text-gray-700">
+        <span class="font-medium text-indigo-600">Click to upload</span> or drag and drop
+      </p>
+      <p class="text-xs text-gray-500">PDF, DOC, or DOCX — up to <%= @max_size_mb %>MB</p>
+      <p class="text-sm font-medium text-gray-900" data-cv-dropzone-target="filename"></p>
+      <p class="text-sm font-medium text-red-600 hidden" data-cv-dropzone-target="error"></p>
+
+      <%= form.file_field :cv,
+            accept: ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            class: "hidden",
+            data: { cv_dropzone_target: "input", action: "change->cv-dropzone#fileSelected" } %>
+    </div>
+
+    <%= form.submit "Upload CV",
+          class: "mt-6 inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed",
+          data: { cv_dropzone_target: "submit" } %>
+  <% end %>
 </div>

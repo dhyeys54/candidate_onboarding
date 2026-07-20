@@ -1,6 +1,38 @@
 module Onboarding
   class CandidatesController < ApplicationController
     def index
+      @max_size_mb = max_size_mb
+    end
+
+    def create
+      profile_result = Onboarding::CreateGuestCandidateProfileService.new.call
+
+      unless profile_result.success?
+        return render_upload_error("Something went wrong, please try again.")
+      end
+
+      upload_result = Onboarding::UploadCvService.new(
+        candidate_profile: profile_result.candidate_profile,
+        uploaded_file: params[:cv]
+      ).call
+
+      if upload_result.success?
+        redirect_to onboarding_candidate_profile_path(profile_result.candidate_profile)
+      else
+        render_upload_error(upload_result.errors.to_sentence)
+      end
+    end
+
+    private
+
+    def render_upload_error(message)
+      @max_size_mb = max_size_mb
+      flash.now[:alert] = message
+      render :index, status: :unprocessable_entity
+    end
+
+    def max_size_mb
+      Rails.application.config.x.cv_upload.max_size / 1.megabyte
     end
   end
 end

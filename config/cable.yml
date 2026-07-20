@@ -1,9 +1,10 @@
-# Async adapter only works within the same process, so for manually triggering cable updates from a console,
-# and seeing results in the browser, you must do so from the web console (running inside the dev process),
-# not a terminal started via bin/rails console! Add "console" to any action or any ERB template view
-# to make the web console appear.
+# Redis (not the default "async" adapter) because Procfile.dev runs the web server and the Sidekiq
+# worker as separate processes — ParseCandidateCvJob broadcasts Turbo Stream updates from the worker
+# process, and the async adapter only delivers within the process that broadcast them.
 development:
-  adapter: async
+  adapter: redis
+  url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6379/0") %>
+  channel_prefix: dental_onboarding_development
 
 test:
   adapter: test

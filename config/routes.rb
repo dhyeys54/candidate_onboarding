@@ -16,7 +16,8 @@ Rails.application.routes.draw do
 
   # Onboarding namespace: candidate-facing CV upload/parse/review flow (the core product surface).
   namespace :onboarding do
-    resources :candidates, only: [ :index ]
+    resources :candidates, only: [ :index, :create ]
+    resources :candidate_profiles, only: [ :show, :edit ]
   end
 
   # Admin namespace: staff-only, HTTP Basic Auth via Admin::BaseController (ADMIN_USERNAME/ADMIN_PASSWORD).

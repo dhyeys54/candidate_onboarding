@@ -42,11 +42,20 @@ bin/dev
 ```
 
 Runs Rails together with the Tailwind CSS watcher and a Sidekiq worker (see `Procfile.dev`). Requires a
-Redis server running locally (`REDIS_URL` defaults to `redis://localhost:6379/0`).
+Redis server running locally (`REDIS_URL` defaults to `redis://localhost:6379/0`) — this also backs
+Action Cable in development (`config/cable.yml`), which the CV upload flow uses to broadcast Turbo
+Stream status updates from the Sidekiq worker process to the browser.
+
+CV uploads (`Onboarding::CandidateDocument`) are capped at 25MB and restricted to PDF/DOC/DOCX by
+default (`config/initializers/cv_upload.rb`); override the size limit with `CV_MAX_SIZE_MB`.
 
 The Sidekiq Web UI is mounted at `/sidekiq`, protected by HTTP Basic Auth. Set `SIDEKIQ_WEB_USERNAME` and
 `SIDEKIQ_WEB_PASSWORD` in the environment to enable access (unset in local dev means the check always
 fails closed, so the UI stays inaccessible until both are set).
+
+The `/admin` namespace (staff-only, no routes yet) is likewise protected by HTTP Basic Auth via
+`Admin::BaseController`. Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in the environment to enable access
+(same fail-closed behavior when unset).
 
 ## Tests
 
