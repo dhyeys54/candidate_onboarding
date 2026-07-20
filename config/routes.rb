@@ -14,6 +14,11 @@ Rails.application.routes.draw do
 
   mount Sidekiq::Web, at: "/sidekiq"
 
+  # Admin namespace: staff-only, HTTP Basic Auth via Admin::BaseController (ADMIN_USERNAME/ADMIN_PASSWORD).
+  # No routes yet — admin controllers/views land in a later step.
+  namespace :admin do
+  end
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check

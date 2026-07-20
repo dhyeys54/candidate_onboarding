@@ -1,0 +1,11 @@
+guest_one:
+  first_name: Alex
+  last_name: Guest
+  email: alex.guest@example.com
+  role: guest
+
+candidate_one:
+  first_name: Sam
+  last_name: Candidate
+  email: sam.candidate@example.com
+  role: candidate
