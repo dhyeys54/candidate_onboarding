@@ -13,13 +13,16 @@ features should be built toward.
 * Ruby 4.0.6 (see `.ruby-version`)
 * Rails 8.1.3
 * PostgreSQL
+* Redis (backs Sidekiq, Rails.cache, and Action Cable)
+* Sidekiq (background job processing)
 * Propshaft (asset pipeline)
 * Importmap, Turbo, Stimulus
 * Tailwind CSS
 
 ## Setup
 
-Requirements: Ruby 4.0.6 (as pinned in `.ruby-version`) and a running PostgreSQL server.
+Requirements: Ruby 4.0.6 (as pinned in `.ruby-version`), a running PostgreSQL server, and a running
+Redis server (defaults to `redis://localhost:6379/0`; override with `REDIS_URL`).
 
 ```
 bin/setup
@@ -38,7 +41,8 @@ per-checkout; each machine sets this up locally via `bin/setup` / `bundle instal
 bin/dev
 ```
 
-Runs Rails together with the Tailwind CSS watcher (see `Procfile.dev`).
+Runs Rails together with the Tailwind CSS watcher and a Sidekiq worker (see `Procfile.dev`). Requires a
+Redis server running locally (`REDIS_URL` defaults to `redis://localhost:6379/0`).
 
 ## Tests
 
@@ -76,6 +80,9 @@ bin/rails db:seed:replant
 
 The `Dockerfile` builds a production image (see the comment at the top of the file for build/run
 commands). Deployment is via [Kamal](https://kamal-deploy.org/) — see `config/deploy.yml` and `.kamal/`.
+The same image runs both the web server and, on the `job` role, the Sidekiq worker
+(`bin/sidekiq -C config/sidekiq.yml`); a `redis` Kamal accessory backs Sidekiq, `Rails.cache`, and Action
+Cable in production (`REDIS_URL`, see `config/deploy.yml`).
 
 The Dockerfile and this README are kept in sync with what the app actually needs to run; any change that
 adds a service, dependency, background worker, or env var should update both.
