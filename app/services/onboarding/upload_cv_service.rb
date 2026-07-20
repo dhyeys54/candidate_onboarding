@@ -2,21 +2,33 @@ module Onboarding
   class UploadCvService
     Result = Struct.new(:success?, :candidate_document, :errors, keyword_init: true)
 
+    # Safe to call with arbitrary params[:cv] input, including nil, a plain string (a client can send
+    # a "cv" form field that isn't a real file part), or anything else that isn't an uploaded-file
+    # object — only the last case reaches the content-type/size checks, which assume a real file.
+    def self.validate(uploaded_file)
+      unless uploaded_file.respond_to?(:content_type) && uploaded_file.respond_to?(:size)
+        return [ "Please choose a CV file to upload." ]
+      end
+
+      config = Rails.application.config.x.cv_upload
+      errors = []
+      unless config.allowed_content_types.include?(uploaded_file.content_type)
+        errors << "CV must be a PDF or Word document (.pdf, .doc, .docx)."
+      end
+      if uploaded_file.size > config.max_size
+        errors << "CV is too large (maximum is #{config.max_size / 1.megabyte}MB)."
+      end
+      errors
+    end
+
     def initialize(candidate_profile:, uploaded_file:)
       @candidate_profile = candidate_profile
       @uploaded_file = uploaded_file
     end
 
     def call
-      return failure([ "Please choose a CV file to upload." ]) if uploaded_file.blank?
-
-      config = Rails.application.config.x.cv_upload
-      unless config.allowed_content_types.include?(uploaded_file.content_type)
-        return failure([ "CV must be a PDF or Word document (.pdf, .doc, .docx)." ])
-      end
-      if uploaded_file.size > config.max_size
-        return failure([ "CV is too large (maximum is #{config.max_size / 1.megabyte}MB)." ])
-      end
+      validation_errors = self.class.validate(uploaded_file)
+      return failure(validation_errors) if validation_errors.any?
 
       candidate_document = candidate_profile.candidate_documents.build(
         document_type: :cv,
