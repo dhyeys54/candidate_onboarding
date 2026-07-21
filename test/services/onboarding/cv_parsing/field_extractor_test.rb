@@ -99,6 +99,38 @@ class Onboarding::CvParsing::FieldExtractorTest < ActiveSupport::TestCase
     assert_equal :high, result[:big_number].confidence
   end
 
+  test "extracts a BIG registration status via an exact alias" do
+    result = extract("I am BIG registered and actively practicing.\n")
+
+    assert_equal "big_registered", result[:big_registration_status].value
+    assert_equal :high, result[:big_registration_status].confidence
+  end
+
+  test "does not extract a BIG registration status when none is mentioned" do
+    result = extract("Contact\nEmail: jane@example.com\n")
+
+    assert_not result.key?(:big_registration_status)
+  end
+
+  test "extracts years of experience from a labeled English phrase" do
+    result = extract("8 years of experience in general dentistry.\n")
+
+    assert_equal 8, result[:years_of_experience].value
+    assert_equal :high, result[:years_of_experience].confidence
+  end
+
+  test "extracts years of experience from a Dutch phrase" do
+    result = extract("Meer dan 5 jaar werkervaring als tandarts.\n")
+
+    assert_equal 5, result[:years_of_experience].value
+  end
+
+  test "does not extract years of experience when the phrase is absent" do
+    result = extract("Contact\nEmail: jane@example.com\n")
+
+    assert_not result.key?(:years_of_experience)
+  end
+
   test "extracts a suggested summary from a labeled section" do
     text = "Profiel\nErvaren tandarts met 8 jaar werkervaring.\n\nContact\nEmail: jane@example.com\n"
     result = extract(text)
@@ -216,6 +248,27 @@ class Onboarding::CvParsing::FieldExtractorTest < ActiveSupport::TestCase
     result = extract("Contact\nEmail: jane@example.com\n")
 
     assert_not result.key?(:skill_names)
+  end
+
+  test "extracts language names from a labeled section via the alias dictionary" do
+    text = "Languages\nEnglish, Nederlands\n\nContact\nEmail: jane@example.com\n"
+    result = extract(text)
+
+    assert_equal [ "Dutch", "English" ], result[:language_names].value.sort
+    assert_equal :low, result[:language_names].confidence
+  end
+
+  test "extracts languages from a Dutch section heading" do
+    text = "Talen\nEngels, Nederlands\n\nContact\nEmail: jane@example.com\n"
+    result = extract(text)
+
+    assert_equal [ "Dutch" ], result[:language_names].value.sort
+  end
+
+  test "does not extract languages when there is no languages section" do
+    result = extract("Contact\nEmail: jane@example.com\n")
+
+    assert_not result.key?(:language_names)
   end
 
   test "extracts a plausible set of fields from a real resume PDF" do

@@ -79,6 +79,66 @@ dutch_cities.each do |city|
   end
 end
 
+big_registration_status_aliases = {
+  "big-geregistreerd" => "big_registered",
+  "big geregistreerd" => "big_registered",
+  "big registered" => "big_registered",
+  "big-registratie" => "big_registered",
+  "in opleiding tot big" => "in_progress",
+  "big in aanvraag" => "in_progress",
+  "big registration in progress" => "in_progress",
+  "onder supervisie" => "under_supervision",
+  "onder toezicht" => "under_supervision",
+  "under supervision" => "under_supervision"
+}
+
+big_registration_status_aliases.each do |pattern, value|
+  Onboarding::CvExtractionAlias.find_or_create_by!(field: "big_registration_status", pattern: pattern, match_type: :exact) do |alias_record|
+    alias_record.value = value
+  end
+end
+
+# Onboarding::Language — starter platform language list, shown as a picker on the candidate's
+# Personal details page and matched against by CvParsing::ProfileMapper when a CV lists languages.
+languages = %w[Dutch English German French Spanish Italian Portuguese Polish Turkish Arabic Romanian]
+
+languages.each do |name|
+  Onboarding::Language.find_or_create_by!(name: name)
+end
+
+# NL/EN spellings of the languages above, canonicalized to the Onboarding::Language#name FieldExtractor
+# matches against for a CV's "Talen"/"Languages" section.
+language_aliases = {
+  "dutch" => "Dutch",
+  "nederlands" => "Dutch",
+  "english" => "English",
+  "engels" => "English",
+  "german" => "German",
+  "duits" => "German",
+  "french" => "French",
+  "frans" => "French",
+  "spanish" => "Spanish",
+  "spaans" => "Spanish",
+  "italian" => "Italian",
+  "italiaans" => "Italian",
+  "portuguese" => "Portuguese",
+  "portugees" => "Portuguese",
+  "polish" => "Polish",
+  "pools" => "Polish",
+  "turkish" => "Turkish",
+  "turks" => "Turkish",
+  "arabic" => "Arabic",
+  "arabisch" => "Arabic",
+  "romanian" => "Romanian",
+  "roemeens" => "Romanian"
+}
+
+language_aliases.each do |pattern, value|
+  Onboarding::CvExtractionAlias.find_or_create_by!(field: "language", pattern: pattern, match_type: :exact) do |alias_record|
+    alias_record.value = value
+  end
+end
+
 # Onboarding::Skill — starter platform skill list, grouped by job_function, shown as a checklist on
 # the candidate's Skills page and consulted by CvParsing::ProfileMapper to match skills found on an
 # uploaded CV. Not exhaustive: job functions not listed here (specialist, prevention_assistant,

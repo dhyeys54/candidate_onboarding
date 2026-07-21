@@ -50,6 +50,21 @@ class Onboarding::CvParsing::ProfileMapperTest < ActiveSupport::TestCase
     assert_not profile.extracted_fields.key?("job_function")
   end
 
+  test "applies extracted big_registration_status and years_of_experience" do
+    profile = build_guest_profile
+    document = build_document(profile)
+    extracted = {
+      big_registration_status: value("big_registered"),
+      years_of_experience: value(8)
+    }
+
+    Onboarding::CvParsing::ProfileMapper.new(document, extracted).call
+    profile.reload
+
+    assert_equal "big_registered", profile.big_registration_status
+    assert_equal 8, profile.years_of_experience
+  end
+
   test "does not overwrite the identity of a non-guest user" do
     profile = onboarding_candidate_profiles(:draft_profile)
     document = build_document(profile)
@@ -259,6 +274,39 @@ class Onboarding::CvParsing::ProfileMapperTest < ActiveSupport::TestCase
     Onboarding::CvParsing::ProfileMapper.new(document, extracted).call
 
     assert_equal 1, profile.reload.candidate_skills.count
+  end
+
+  test "builds candidate_language records from extracted, alias-canonicalized language names" do
+    profile = build_guest_profile
+    document = build_document(profile)
+    extracted = { language_names: value([ "English", "Dutch" ], confidence: :low) }
+
+    Onboarding::CvParsing::ProfileMapper.new(document, extracted).call
+    profile.reload
+
+    assert_equal [ "Dutch", "English" ], profile.languages.pluck(:name).sort
+    assert_equal "low", profile.extracted_fields["language_names"]
+  end
+
+  test "drops an extracted language name that doesn't match the platform language list" do
+    profile = build_guest_profile
+    document = build_document(profile)
+    extracted = { language_names: value([ "Klingon" ]) }
+
+    Onboarding::CvParsing::ProfileMapper.new(document, extracted).call
+
+    assert_equal 0, profile.reload.languages.count
+  end
+
+  test "does not add languages when the candidate already has a language selected" do
+    profile = onboarding_candidate_profiles(:draft_profile)
+    document = build_document(profile)
+    extracted = { language_names: value([ "Dutch" ]) }
+
+    Onboarding::CvParsing::ProfileMapper.new(document, extracted).call
+    profile.reload
+
+    assert_equal [ "English" ], profile.languages.pluck(:name)
   end
 
   test "is idempotent across repeated calls" do

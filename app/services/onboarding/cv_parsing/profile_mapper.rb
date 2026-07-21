@@ -6,10 +6,13 @@ module Onboarding
     # it was applied.
     class ProfileMapper
       USER_FIELDS = %i[first_name last_name email].freeze
-      PROFILE_FIELDS = %i[phone city country job_function big_number suggested_summary].freeze
+      PROFILE_FIELDS = %i[
+        phone city country job_function big_number big_registration_status years_of_experience suggested_summary
+      ].freeze
       EDUCATION_ENTRIES_FIELD = :education_entries
       WORK_EXPERIENCE_ENTRIES_FIELD = :work_experience_entries
       SKILL_NAMES_FIELD = :skill_names
+      LANGUAGE_NAMES_FIELD = :language_names
       GUEST_EMAIL_PATTERN = /\Aguest-[0-9a-f-]{36}@guest\.dentalonboarding\.invalid\z/
 
       def initialize(candidate_document, extracted_fields)
@@ -25,6 +28,7 @@ module Onboarding
           identity_applied = apply_user_fields
           apply_profile_fields
           apply_skill_entries
+          apply_language_entries
           apply_education_entries
           apply_work_experience_entries
           user.update!(role: :candidate) if identity_applied && user.guest?
@@ -109,6 +113,26 @@ module Onboarding
 
         candidate_profile.extracted_fields = candidate_profile.extracted_fields.merge(
           SKILL_NAMES_FIELD.to_s => extracted.confidence.to_s
+        )
+        candidate_profile.save!
+      end
+
+      # Only prefills when the candidate has no languages selected yet (idempotent, mirrors the other
+      # apply_* methods). FieldExtractor already canonicalized names via the "language" alias
+      # dictionary, so this only needs an exact (case-insensitive) match against the platform
+      # Language list — anything unmatched is dropped, since CandidateLanguage (unlike CandidateSkill)
+      # has no free-text fallback column to hold an unrecognized name for review.
+      def apply_language_entries
+        extracted = extracted_fields[LANGUAGE_NAMES_FIELD]
+        return if extracted.nil? || candidate_profile.any_languages_selected?
+
+        known_languages = Onboarding::Language.where(active: true).index_by { |language| language.name.downcase }
+        matched = Array(extracted.value).filter_map { |name| known_languages[name.to_s.downcase] }
+        return if matched.empty?
+
+        matched.each { |language| candidate_profile.candidate_languages.build(language: language) }
+        candidate_profile.extracted_fields = candidate_profile.extracted_fields.merge(
+          LANGUAGE_NAMES_FIELD.to_s => extracted.confidence.to_s
         )
         candidate_profile.save!
       end

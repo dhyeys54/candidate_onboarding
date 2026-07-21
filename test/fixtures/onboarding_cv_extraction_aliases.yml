@@ -30,3 +30,27 @@ netherlands_country:
   pattern: netherlands
   value: Netherlands
   match_type: exact
+
+english_language:
+  field: language
+  pattern: english
+  value: English
+  match_type: exact
+
+dutch_language:
+  field: language
+  pattern: nederlands
+  value: Dutch
+  match_type: exact
+
+big_registered_status:
+  field: big_registration_status
+  pattern: big registered
+  value: big_registered
+  match_type: exact
+
+big_in_progress_status:
+  field: big_registration_status
+  pattern: in opleiding tot big
+  value: in_progress
+  match_type: exact

@@ -37,6 +37,12 @@ module Onboarding
       ].freeze
       SKILLS_HEADINGS = %w[vaardigheden skills competenties competencies].freeze
       SKILL_SEPARATOR_REGEX = /,|•|·|\|/
+      LANGUAGES_HEADINGS = %w[talen languages taalvaardigheden language\ skills].freeze
+      YEARS_OF_EXPERIENCE_REGEX = /
+        (\d{1,2})\+?\s*(?:years?|jaar|jaren)\s*(?:of\s+)?
+        (?:combined\s+|relevant\s+|dental\s+|professional\s+|work\s+|werk\s+)*
+        (?:experience|ervaring|werkervaring)
+      /ix
       DATE_RANGE_REGEX = /(\d{4})\s*(?:[-–—]|tot|to|until)\s*(\d{4}|present|heden|current|nu)/i
       EDUCATION_LEVEL_PATTERNS = {
         /\bmbo\b/i => :mbo,
@@ -71,10 +77,13 @@ module Onboarding
           .merge(compact_field(:country, extract_alias_match("country")))
           .merge(compact_field(:job_function, extract_alias_match("job_function")))
           .merge(compact_field(:big_number, extract_big_number))
+          .merge(compact_field(:big_registration_status, extract_alias_match("big_registration_status")))
+          .merge(compact_field(:years_of_experience, extract_years_of_experience))
           .merge(compact_field(:suggested_summary, extract_summary))
           .merge(compact_field(:education_entries, extract_education_entries))
           .merge(compact_field(:work_experience_entries, extract_work_experience_entries))
           .merge(compact_field(:skill_names, extract_skills))
+          .merge(compact_field(:language_names, extract_language_names))
       end
 
       private
@@ -150,6 +159,12 @@ module Onboarding
         end
       end
 
+      def extract_years_of_experience
+        return unless (match = text.match(YEARS_OF_EXPERIENCE_REGEX))
+
+        ExtractedValue.new(value: match[1].to_i, confidence: :high, matched_pattern: "years_of_experience_pattern")
+      end
+
       def extract_summary
         heading_index = lines.index { |line| SUMMARY_HEADINGS.include?(line.downcase.delete(":").strip) }
         return unless heading_index
@@ -222,6 +237,27 @@ module Onboarding
         return if names.empty?
 
         ExtractedValue.new(value: names, confidence: :low, matched_pattern: "skills_section_heuristic")
+      end
+
+      # Best-effort: locates a "Talen"/"Languages" section and matches its text against the
+      # Onboarding::CvExtractionAlias "language" dictionary, which maps NL/EN language names to the
+      # canonical Onboarding::Language name ProfileMapper matches against — unlike extract_skills,
+      # which keeps raw text for ProfileMapper to match, languages are a closed small set so
+      # canonicalizing here up front sidesteps NL/EN spelling differences entirely.
+      def extract_language_names
+        heading_index = lines.index { |line| LANGUAGES_HEADINGS.include?(line.downcase.delete(":").strip) }
+        return unless heading_index
+
+        body = lines[(heading_index + 1)..].to_a.take_while { |line| !heading_like?(line) }.first(20)
+        return if body.empty?
+
+        section_text = body.join(" ")
+        names = Onboarding::CvExtractionAlias.for_field("language").filter_map do |a|
+          a.value if section_text.match?(/(?<![\p{L}\p{N}])#{Regexp.escape(a.pattern)}(?![\p{L}\p{N}])/i)
+        end.uniq
+        return if names.empty?
+
+        ExtractedValue.new(value: names, confidence: :low, matched_pattern: "languages_section_heuristic")
       end
 
       def group_lines_by_date_range(body)
