@@ -42,7 +42,7 @@ module Onboarding
     end
 
     def going_back?
-      params[:commit] == "Back"
+      params[:direction] == "back"
     end
   end
 end

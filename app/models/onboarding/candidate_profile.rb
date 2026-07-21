@@ -4,13 +4,15 @@ module Onboarding
     # see the "candidate setup" plan for context. Swap the values here when they land; the array-column
     # + inclusion-validation shape doesn't need to change.
     REGIONS = %w[north south east west central].freeze
-    EMPLOYMENT_TYPES = %w[employed self_employed freelance].freeze
+    EMPLOYMENT_TYPES = %w[employed self_employed freelance percentage_based].freeze
+    SALARY_RELEVANT_EMPLOYMENT_TYPES = %w[employed].freeze
+    PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES = %w[self_employed freelance percentage_based].freeze
 
     TRANSPORT_TYPES = %w[bike scooter public_transport car].freeze
     WORKING_DAYS = %w[monday tuesday wednesday thursday friday saturday sunday].freeze
 
     BIG_RELEVANT_JOB_FUNCTIONS = %w[general_dentist dental_hygienist specialist].freeze
-    REVENUE_RELEVANT_JOB_FUNCTIONS = %w[general_dentist dental_hygienist specialist prevention_assistant].freeze
+    REVENUE_RELEVANT_JOB_FUNCTIONS = %w[general_dentist dental_hygienist specialist].freeze
 
     enum :job_function, Onboarding::JobFunctions::VALUES
     enum :search_status, { active: 0, passive: 1, inactive: 2 }

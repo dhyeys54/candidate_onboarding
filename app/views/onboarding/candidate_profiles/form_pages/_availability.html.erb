@@ -1,17 +1,7 @@
 <div class="grid grid-cols-1 gap-6">
   <div>
-    <span class="<%= form_label_class %>">Available working days<span class="text-red-500"> *</span></span>
-    <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
-      <% Onboarding::CandidateProfile::WORKING_DAYS.each do |day| %>
-        <label class="flex items-center gap-2 text-sm text-gray-700">
-          <%= check_box_tag "candidate_profile[working_days][]", day, candidate_profile.working_days.include?(day),
-                id: "candidate_profile_working_days_#{day}", class: "rounded border-gray-300" %>
-          <%= day.humanize %>
-        </label>
-      <% end %>
-      <%= hidden_field_tag "candidate_profile[working_days][]", "" %>
-    </div>
-    <%= field_errors(candidate_profile, :working_days) %>
+    <%= checkbox_group(candidate_profile, :working_days, options: Onboarding::CandidateProfile::WORKING_DAYS,
+          label: "Available working days", grid_class: "grid-cols-2 sm:grid-cols-4", required: true) %>
   </div>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">

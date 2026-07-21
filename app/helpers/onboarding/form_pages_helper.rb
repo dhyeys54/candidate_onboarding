@@ -48,6 +48,26 @@ module Onboarding
       content_tag :span, " *", class: "text-red-500"
     end
 
+    # Renders a candidate_profile array-attribute (regions/transport_types/employment_types/
+    # working_days) as a checkbox group, plus the trailing hidden fallback field real submissions
+    # need so unchecking every box still submits the key (see
+    # CandidateProfile#strip_blank_array_values). `data` is for wiring up a Stimulus target/action
+    # on each checkbox (e.g. the Compensation page's employment_types toggle).
+    def checkbox_group(candidate_profile, attribute, options:, label:, grid_class: "grid-cols-2 sm:grid-cols-3", required: false, data: {})
+      selected = Array(candidate_profile.public_send(attribute))
+
+      safe_join([
+        content_tag(:span, safe_join([ label, required_marker(required) ].compact), class: form_label_class),
+        content_tag(:div, class: "mt-1 grid #{grid_class} gap-2") do
+          safe_join(
+            options.map { |option| checkbox_group_option(attribute, option, selected.include?(option), data) } +
+              [ hidden_field_tag("candidate_profile[#{attribute}][]", "") ]
+          )
+        end,
+        field_errors(candidate_profile, attribute)
+      ])
+    end
+
     # Combined error messages for the top-of-page summary banner: candidate_profile's own errors,
     # plus its user's. Skips the "user.*" compound entries that nested-attributes autosave
     # validation imports onto candidate_profile — candidate_profile.user.errors already covers
@@ -72,6 +92,16 @@ module Onboarding
           "ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
           low_confidence ? "bg-amber-100 text-amber-800" : "bg-indigo-100 text-indigo-800"
         ].join(" ")
+    end
+
+    private
+
+    def checkbox_group_option(attribute, option, checked, data)
+      content_tag :label, class: "flex items-center gap-2 text-sm text-gray-700" do
+        checkbox = check_box_tag "candidate_profile[#{attribute}][]", option, checked,
+          id: "candidate_profile_#{attribute}_#{option}", class: "rounded border-gray-300", data: data
+        safe_join([ checkbox, option.humanize ])
+      end
     end
   end
 end

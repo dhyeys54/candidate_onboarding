@@ -143,11 +143,11 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
     assert_equal "Jamie", profile.reload.user.first_name
   end
 
-  test "update with commit=Back goes to the previous page without losing the current page's edits" do
+  test "update with direction=back goes to the previous page without losing the current page's edits" do
     profile = onboarding_candidate_profiles(:draft_profile)
 
     patch onboarding_candidate_profile_path(profile),
-      params: { page: "compensation", commit: "Back", candidate_profile: { years_of_experience: 5 } }
+      params: { page: "compensation", direction: "back", candidate_profile: { years_of_experience: 5 } }
 
     assert_redirected_to edit_onboarding_candidate_profile_path(profile, page: "job_details")
     assert_equal 5, profile.reload.years_of_experience
@@ -252,6 +252,20 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update requires average_daily_revenue for revenue-relevant job functions" do
     profile = onboarding_candidate_profiles(:draft_profile)
+    profile.update!(job_function: "general_dentist")
+
+    patch onboarding_candidate_profile_path(profile),
+      params: { page: "compensation",
+                candidate_profile: { employment_types: [ "employed" ], years_of_experience: 5,
+                                      desired_gross_salary: 3000, average_daily_revenue: "",
+                                      big_registration_status: "not_applicable" } }
+
+    assert_response :unprocessable_entity
+    assert_select "li", "Average daily revenue can't be blank"
+  end
+
+  test "update does not require average_daily_revenue for non-revenue-relevant job functions" do
+    profile = onboarding_candidate_profiles(:draft_profile)
     profile.update!(job_function: "prevention_assistant")
 
     patch onboarding_candidate_profile_path(profile),
@@ -259,8 +273,19 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
                 candidate_profile: { employment_types: [ "employed" ], years_of_experience: 5,
                                       desired_gross_salary: 3000, average_daily_revenue: "" } }
 
+    assert_response :found
+  end
+
+  test "update requires desired_percentage when percentage_based employment type is selected" do
+    profile = onboarding_candidate_profiles(:draft_profile)
+
+    patch onboarding_candidate_profile_path(profile),
+      params: { page: "compensation",
+                candidate_profile: { employment_types: [ "percentage_based" ], years_of_experience: 5,
+                                      desired_percentage: "" } }
+
     assert_response :unprocessable_entity
-    assert_select "li", "Average daily revenue can't be blank"
+    assert_select "li", "Desired percentage can't be blank"
   end
 
   test "update requires big_registration_status for BIG-relevant job functions" do

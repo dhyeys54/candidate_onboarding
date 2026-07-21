@@ -9,6 +9,10 @@ import { Controller } from "@hotwired/stimulus"
 // regardless of what's currently shown, so hiding a field client-side never bypasses it.
 export default class extends Controller {
   static targets = [ "employmentCheckbox", "salarySection", "percentageSection", "bigStatusSelect", "bigNumberSection" ]
+  // Sourced from Onboarding::CandidateProfile::SALARY_RELEVANT_EMPLOYMENT_TYPES /
+  // PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES (see the view) so the employment-type lists driving these
+  // toggles live in exactly one place, not copied here too.
+  static values = { salaryRelevantTypes: Array, percentageRelevantTypes: Array }
 
   connect() {
     this.toggleEmploymentSections()
@@ -19,12 +23,13 @@ export default class extends Controller {
     const checked = this.employmentCheckboxTargets.filter((box) => box.checked).map((box) => box.value)
 
     if (this.hasSalarySectionTarget) {
-      this.salarySectionTarget.classList.toggle("hidden", !checked.includes("employed"))
+      const salaryRelevant = checked.some((type) => this.salaryRelevantTypesValue.includes(type))
+      this.salarySectionTarget.classList.toggle("hidden", !salaryRelevant)
     }
 
     if (this.hasPercentageSectionTarget) {
-      const percentageBased = checked.some((type) => [ "self_employed", "freelance" ].includes(type))
-      this.percentageSectionTarget.classList.toggle("hidden", !percentageBased)
+      const percentageRelevant = checked.some((type) => this.percentageRelevantTypesValue.includes(type))
+      this.percentageSectionTarget.classList.toggle("hidden", !percentageRelevant)
     }
   }
 

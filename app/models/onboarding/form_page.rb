@@ -22,9 +22,10 @@ module Onboarding
       # Per-page validation hook, invoked by CandidateProfile#run_current_page_validation when the
       # model is validated/saved under this page's context (its `key`). Subclasses override to add
       # errors directly onto candidate_profile (and/or candidate_profile.user, for pages that own
-      # user_fields). Base implementation is a no-op, for pages with nothing to enforce yet.
+      # user_fields). Base implementation is a no-op, for pages with nothing to enforce yet. Return
+      # value is ignored — this runs as an ActiveModel `validate` callback, so only errors added
+      # onto candidate_profile.errors matter.
       def validate(_candidate_profile)
-        true
       end
     end
   end

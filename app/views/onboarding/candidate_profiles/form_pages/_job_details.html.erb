@@ -11,18 +11,8 @@
 <h3 class="mt-8 text-base font-semibold text-gray-900">Job preferences</h3>
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
   <div class="sm:col-span-2">
-    <span class="<%= form_label_class %>">Preferred regions<span class="text-red-500"> *</span></span>
-    <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3">
-      <% Onboarding::CandidateProfile::REGIONS.each do |region| %>
-        <label class="flex items-center gap-2 text-sm text-gray-700">
-          <%= check_box_tag "candidate_profile[regions][]", region, candidate_profile.regions.include?(region),
-                id: "candidate_profile_regions_#{region}", class: "rounded border-gray-300" %>
-          <%= region.humanize %>
-        </label>
-      <% end %>
-      <%= hidden_field_tag "candidate_profile[regions][]", "" %>
-    </div>
-    <%= field_errors(candidate_profile, :regions) %>
+    <%= checkbox_group(candidate_profile, :regions, options: Onboarding::CandidateProfile::REGIONS,
+          label: "Preferred regions", grid_class: "grid-cols-2 sm:grid-cols-3", required: true) %>
   </div>
 
   <div>
@@ -40,18 +30,8 @@
   </div>
 
   <div class="sm:col-span-2">
-    <span class="<%= form_label_class %>">Transport type</span>
-    <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
-      <% Onboarding::CandidateProfile::TRANSPORT_TYPES.each do |transport_type| %>
-        <label class="flex items-center gap-2 text-sm text-gray-700">
-          <%= check_box_tag "candidate_profile[transport_types][]", transport_type, candidate_profile.transport_types.include?(transport_type),
-                id: "candidate_profile_transport_types_#{transport_type}", class: "rounded border-gray-300" %>
-          <%= transport_type.humanize %>
-        </label>
-      <% end %>
-      <%= hidden_field_tag "candidate_profile[transport_types][]", "" %>
-    </div>
-    <%= field_errors(candidate_profile, :transport_types) %>
+    <%= checkbox_group(candidate_profile, :transport_types, options: Onboarding::CandidateProfile::TRANSPORT_TYPES,
+          label: "Transport type", grid_class: "grid-cols-2 sm:grid-cols-4") %>
   </div>
 
   <div class="sm:col-span-2">
