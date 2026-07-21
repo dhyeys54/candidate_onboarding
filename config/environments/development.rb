@@ -70,6 +70,22 @@ Rails.application.configure do
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
 
+  # Allow access via an ngrok tunnel (`bin/dev` + `ngrok http 3000`), whose hostname is random on
+  # each restart on the free tier. Named hosts other than .localhost/.test are blocked by default;
+  # IP-based hosts already permit anything in development, so this only needs to cover the tunnel.
+  config.hosts << /.*\.ngrok-free\.app/
+  config.hosts << /.*\.ngrok\.io/
+  config.hosts << /.*\.ngrok\.app/
+
+  # Action Cable's origin check defaults to localhost only, which would silently drop the
+  # websocket connection (breaking Turbo Stream broadcasts) when loaded through the ngrok host.
+  config.action_cable.allowed_request_origins = [
+    /https?:\/\/localhost:\d+/,
+    /https:\/\/.*\.ngrok-free\.app/,
+    /https:\/\/.*\.ngrok\.io/,
+    /https:\/\/.*\.ngrok\.app/
+  ]
+
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
 
