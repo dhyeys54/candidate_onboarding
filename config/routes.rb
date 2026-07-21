@@ -17,12 +17,16 @@ Rails.application.routes.draw do
   # Onboarding namespace: candidate-facing CV upload/parse/review flow (the core product surface).
   namespace :onboarding do
     resources :candidates, only: [ :index, :create ]
-    resources :candidate_profiles, only: [ :show, :edit, :update ]
+    resources :candidate_profiles, only: [ :show, :edit, :update ] do
+      resource :cv, only: [ :show ], controller: "candidate_documents"
+    end
   end
 
   # Admin namespace: staff-only, HTTP Basic Auth via Admin::BaseController (ADMIN_USERNAME/ADMIN_PASSWORD).
-  # No routes yet — admin controllers/views land in a later step.
   namespace :admin do
+    resources :candidates, only: [ :index, :show ] do
+      resource :cv, only: [ :show ], controller: "candidate_documents"
+    end
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

@@ -1,0 +1,10 @@
+<p>
+  <%= @candidate_profile.user.first_name %> <%= @candidate_profile.user.last_name %> has finished onboarding.
+</p>
+<p>
+  Job function: <%= @candidate_profile.job_function&.humanize %><br>
+  Email: <%= @candidate_profile.user.email %>
+</p>
+<p>
+  <%= link_to "View candidate", admin_candidate_url(@candidate_profile) %>
+</p>

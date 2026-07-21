@@ -1,6 +1,9 @@
 module Onboarding
   class CandidateProfilesController < ApplicationController
+    include Onboarding::CandidateAuthorization
+
     before_action :set_candidate_profile
+    before_action :authorize_candidate!
     before_action :set_form
 
     def show
@@ -14,6 +17,7 @@ module Onboarding
       @candidate_profile.assign_attributes(step_attributes)
 
       if @candidate_profile.save(context: going_back? ? nil : @form.page.key)
+        Onboarding::CompleteCandidateProfileService.new(@candidate_profile).call if @form.last_page? && !going_back?
         redirect_to edit_onboarding_candidate_profile_path(@candidate_profile, page: target_page_key)
       else
         render :edit, status: :unprocessable_entity

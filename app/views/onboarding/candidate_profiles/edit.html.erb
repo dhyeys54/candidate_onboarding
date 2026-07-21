@@ -4,6 +4,7 @@
   <h1 class="text-3xl font-semibold text-gray-900 text-center">Let's finish your profile</h1>
   <p class="mt-2 text-sm text-gray-500 text-center">
     We've pre-filled what we could from your CV — review and edit anything before continuing.
+    <%= link_to "Download your CV", onboarding_candidate_profile_cv_path(@candidate_profile), class: "text-indigo-600 hover:text-indigo-500" if @candidate_profile.candidate_documents.any? %>
   </p>
 
   <ol class="mt-8 flex flex-wrap items-center justify-center gap-x-2 gap-y-2">

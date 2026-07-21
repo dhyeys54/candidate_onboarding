@@ -1,0 +1,33 @@
+<% content_for :title, "#{@candidate_profile.user.first_name} #{@candidate_profile.user.last_name}" %>
+
+<div class="w-full max-w-2xl mx-auto">
+  <%= link_to "← All candidates", admin_candidates_path, class: "text-sm text-indigo-600 hover:text-indigo-500" %>
+
+  <h1 class="mt-2 text-3xl font-semibold text-gray-900">
+    <%= @candidate_profile.user.first_name %> <%= @candidate_profile.user.last_name %>
+  </h1>
+
+  <dl class="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border border-gray-200 p-6 text-sm">
+    <div>
+      <dt class="text-gray-500">Email</dt>
+      <dd class="mt-1 text-gray-900"><%= @candidate_profile.user.email %></dd>
+    </div>
+    <div>
+      <dt class="text-gray-500">Phone</dt>
+      <dd class="mt-1 text-gray-900"><%= @candidate_profile.phone.presence || "—" %></dd>
+    </div>
+    <div>
+      <dt class="text-gray-500">Job function</dt>
+      <dd class="mt-1 text-gray-900"><%= @candidate_profile.job_function&.humanize || "—" %></dd>
+    </div>
+    <div>
+      <dt class="text-gray-500">Consent given</dt>
+      <dd class="mt-1 text-gray-900"><%= @candidate_profile.consent_given_at&.to_fs(:long) || "—" %></dd>
+    </div>
+  </dl>
+
+  <% if @candidate_profile.candidate_documents.any? %>
+    <%= link_to "Download CV", admin_candidate_cv_path(@candidate_profile),
+          class: "mt-6 inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500" %>
+  <% end %>
+</div>

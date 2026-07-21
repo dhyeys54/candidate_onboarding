@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_180120) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,6 +72,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_180120) do
     t.string "big_number"
     t.integer "big_registration_status"
     t.string "city"
+    t.datetime "consent_given_at"
     t.string "country"
     t.datetime "created_at", null: false
     t.integer "desired_gross_salary"
@@ -89,12 +90,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_180120) do
     t.text "reason_for_looking"
     t.string "regions", default: [], null: false, array: true
     t.integer "search_status"
+    t.string "session_token"
     t.text "suggested_summary"
     t.string "transport_types", default: [], null: false, array: true
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "working_days", default: [], null: false, array: true
     t.integer "years_of_experience"
+    t.index ["session_token"], name: "index_onboarding_candidate_profiles_on_session_token", unique: true
     t.index ["user_id"], name: "index_onboarding_candidate_profiles_on_user_id", unique: true
   end
 

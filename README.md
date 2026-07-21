@@ -78,9 +78,34 @@ The Sidekiq Web UI is mounted at `/sidekiq`, protected by HTTP Basic Auth. Set `
 `SIDEKIQ_WEB_PASSWORD` in the environment to enable access (unset in local dev means the check always
 fails closed, so the UI stays inaccessible until both are set).
 
-The `/admin` namespace (staff-only, no routes yet) is likewise protected by HTTP Basic Auth via
-`Admin::BaseController`. Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in the environment to enable access
-(same fail-closed behavior when unset).
+The `/admin` namespace (staff-only) is likewise protected by HTTP Basic Auth via `Admin::BaseController`.
+Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in the environment to enable access (same fail-closed behavior
+when unset). It currently exposes a minimal candidate list/detail view (`/admin/candidates`), scoped to
+submitted profiles only, with a CV download action.
+
+When a candidate saves the last page of the onboarding review form, `Onboarding::CompleteCandidateProfileService`
+marks their profile submitted and fires two optional, independently-configured side effects (both are
+no-ops, fail closed, when unset):
+
+* **Recruitment team email** — set `RECRUITMENT_TEAM_EMAIL` to have `Onboarding::CandidateNotificationMailer`
+  send a notification to that address via `deliver_later`.
+* **Automation webhook** — set `CANDIDATE_ONBOARDING_WEBHOOK_URL` to have `Onboarding::CandidateOnboardingWebhookJob`
+  POST a `candidate_onboarding_completed` JSON event to that URL. Delivery failures raise, so Sidekiq's
+  default retry policy applies.
+
+## Privacy & security
+
+* CV files are never served from a public/guessable URL — both the candidate-facing and admin-facing
+  download actions stream the file's bytes through the app (`send_data`), so no Active Storage blob URL
+  is ever generated or exposed to the browser.
+* A candidate's session is tied to an opaque `session_token` on their `Onboarding::CandidateProfile`,
+  stored server-side and mirrored into the encrypted Rails session cookie at upload time. Every
+  candidate-facing request re-checks that token, so a guessed/shared profile ID alone can't be used to
+  view or edit someone else's data.
+* Admins/recruiters authenticate via the existing HTTP Basic Auth (`ADMIN_USERNAME`/`ADMIN_PASSWORD`) and
+  can only see profiles that have completed onboarding (`onboarding_status: submitted`).
+* Candidates must check a consent box before their CV/profile data is processed; the timestamp is
+  recorded on `consent_given_at`.
 
 ## Tests
 

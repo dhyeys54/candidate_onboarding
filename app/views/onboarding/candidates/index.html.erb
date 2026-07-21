@@ -30,6 +30,11 @@
             data: { cv_dropzone_target: "input", action: "change->cv-dropzone#fileSelected" } %>
     </div>
 
+    <label class="mt-6 flex items-start gap-2 text-left text-sm text-gray-600">
+      <%= form.check_box :consent, class: "mt-0.5 size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500", required: true %>
+      <span>I agree that my CV and profile information may be processed to create and improve my candidate profile.</span>
+    </label>
+
     <%= form.submit "Upload CV",
           class: "mt-6 inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed",
           data: { cv_dropzone_target: "submit" } %>

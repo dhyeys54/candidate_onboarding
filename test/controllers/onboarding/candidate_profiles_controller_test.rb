@@ -1,8 +1,25 @@
 require "test_helper"
 
 class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationTest
+  # Authorization is now session-token-based (see Onboarding::CandidateAuthorization) — the token is
+  # only ever set server-side by CandidatesController#create, so tests establish it through a real
+  # upload rather than poking `session` directly (integration-test session mutations outside a real
+  # request/response cycle don't persist to the next request).
+  setup do
+    post onboarding_candidates_path,
+      params: { consent: "1", cv: uploaded_file("sample_cv.pdf", content_type: "application/pdf") }
+    @profile = Onboarding::CandidateProfile.last
+    @profile.update!(job_function: "general_dentist", regions: [ "north" ],
+                      employment_types: [ "employed" ], working_days: [ "monday" ])
+    @profile.candidate_languages.create!(language: onboarding_languages(:english), proficiency: "native")
+  end
+
+  def uploaded_file(fixture_name, content_type:)
+    Rack::Test::UploadedFile.new(file_fixture(fixture_name), content_type)
+  end
+
   def build_document(parsing_status:)
-    document = onboarding_candidate_profiles(:draft_profile).candidate_documents.build(document_type: :cv)
+    document = @profile.candidate_documents.build(document_type: :cv)
     document.file.attach(io: StringIO.new("%PDF-1.4\ncontent"), filename: "cv.pdf", content_type: "application/pdf")
     document.save!
     document.update!(parsing_status: parsing_status)
@@ -12,7 +29,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   test "show renders the processing state while parsing is pending" do
     build_document(parsing_status: :pending)
 
-    get onboarding_candidate_profile_path(onboarding_candidate_profiles(:draft_profile))
+    get onboarding_candidate_profile_path(@profile)
 
     assert_response :success
     assert_select "#cv_status", /reading your CV/
@@ -20,7 +37,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "show renders success with a link to continue once parsing completes" do
     build_document(parsing_status: :completed)
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     get onboarding_candidate_profile_path(profile)
 
@@ -31,7 +48,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "show renders an error with a manual fallback link when parsing fails" do
     build_document(parsing_status: :failed)
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     get onboarding_candidate_profile_path(profile)
 
@@ -41,7 +58,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "edit renders the first form page by default" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     get edit_onboarding_candidate_profile_path(profile)
 
@@ -51,7 +68,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "edit renders every form page" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     Onboarding::Form::PAGES.each do |page|
       get edit_onboarding_candidate_profile_path(profile, page: page.key)
@@ -61,8 +78,8 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "edit renders the candidate's existing language as a selected option, not just an empty picker" do
-    profile = onboarding_candidate_profiles(:draft_profile)
-    language = onboarding_candidate_languages(:candidate_language_one).language
+    profile = @profile
+    language = onboarding_languages(:english)
 
     get edit_onboarding_candidate_profile_path(profile, page: "personal_details")
 
@@ -72,7 +89,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update saves the current page's fields and advances to the next page" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "personal_details",
@@ -86,7 +103,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update re-renders the current page with errors when a required field is missing" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "personal_details",
@@ -99,7 +116,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update rejects a phone number with letters or too few digits" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "personal_details",
@@ -110,7 +127,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update accepts an internationally formatted phone number" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "personal_details",
@@ -120,7 +137,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update blocks personal_details when no language is selected" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
     profile.candidate_languages.destroy_all
 
     patch onboarding_candidate_profile_path(profile),
@@ -132,7 +149,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update ignores a mismatched user id in user_attributes and updates the existing user" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "personal_details",
@@ -144,7 +161,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update with direction=back goes to the previous page without losing the current page's edits" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation", direction: "back", candidate_profile: { years_of_experience: 5 } }
@@ -154,7 +171,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update on the last page has no next page to advance to" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "additional_information", candidate_profile: { suggested_summary: "Great candidate" } }
@@ -162,8 +179,26 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
     assert_redirected_to edit_onboarding_candidate_profile_path(profile, page: "additional_information")
   end
 
+  test "update on the last page marks the profile submitted" do
+    profile = @profile
+
+    patch onboarding_candidate_profile_path(profile),
+      params: { page: "additional_information", candidate_profile: { suggested_summary: "Great candidate" } }
+
+    assert_predicate profile.reload, :submitted?
+  end
+
+  test "update with direction=back on the last page does not mark the profile submitted" do
+    profile = @profile
+
+    patch onboarding_candidate_profile_path(profile),
+      params: { page: "additional_information", direction: "back", candidate_profile: { suggested_summary: "Great candidate" } }
+
+    assert_predicate profile.reload, :draft?
+  end
+
   test "update re-renders job_details with errors when required fields are missing" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "job_details",
@@ -177,7 +212,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update saves job_details fields and advances to the next page" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "job_details",
@@ -195,7 +230,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update accepts a real browser submission with the job_details checkbox groups' blank hidden fallback field" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: URI.encode_www_form([
@@ -216,7 +251,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update re-renders compensation with errors when required fields are missing" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation", candidate_profile: { employment_types: [], years_of_experience: "" } }
@@ -227,7 +262,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update requires desired_gross_salary when an employed employment type is selected" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
@@ -239,7 +274,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update requires desired_percentage when a self-employed or freelance employment type is selected" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
@@ -251,7 +286,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update requires average_daily_revenue for revenue-relevant job functions" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
     profile.update!(job_function: "general_dentist")
 
     patch onboarding_candidate_profile_path(profile),
@@ -265,7 +300,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update does not require average_daily_revenue for non-revenue-relevant job functions" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
     profile.update!(job_function: "prevention_assistant")
 
     patch onboarding_candidate_profile_path(profile),
@@ -277,7 +312,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update requires desired_percentage when percentage_based employment type is selected" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
@@ -289,7 +324,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update requires big_registration_status for BIG-relevant job functions" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
     profile.update!(job_function: "general_dentist")
 
     patch onboarding_candidate_profile_path(profile),
@@ -303,7 +338,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update requires big_number when big_registration_status is big_registered" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
     profile.update!(job_function: "general_dentist")
 
     patch onboarding_candidate_profile_path(profile),
@@ -317,7 +352,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update saves compensation fields and advances to the next page" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
     profile.update!(job_function: "general_dentist")
 
     patch onboarding_candidate_profile_path(profile),
@@ -330,7 +365,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update accepts a real browser submission with the compensation checkbox group's blank hidden fallback field" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
     profile.update!(job_function: "dental_technician")
 
     patch onboarding_candidate_profile_path(profile),
@@ -348,7 +383,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update saves education fields and advances to the next page" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "education",
@@ -362,7 +397,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update saves work_experience fields and advances to the next page" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "work_experience",
@@ -375,7 +410,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update saves skills fields and advances to the next page" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
     profile.update!(job_function: "dental_technician")
     skill = onboarding_skills(:dental_technician_prosthetics)
 
@@ -392,7 +427,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update re-renders availability with errors when required fields are missing" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "availability", candidate_profile: { working_days: [], available_from: "" } }
@@ -403,7 +438,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update saves availability fields and advances to the next page" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "availability",
@@ -413,7 +448,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "update accepts a real browser submission with the availability checkbox group's blank hidden fallback field" do
-    profile = onboarding_candidate_profiles(:draft_profile)
+    profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: URI.encode_www_form([
@@ -426,5 +461,38 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
     assert_redirected_to edit_onboarding_candidate_profile_path(profile, page: "additional_information")
     assert_equal [ "monday" ], profile.reload.working_days
+  end
+
+  test "show 404s for a candidate profile that isn't the current session's" do
+    other_profile = Onboarding::CreateGuestCandidateProfileService.new.call.candidate_profile
+
+    get onboarding_candidate_profile_path(other_profile)
+
+    assert_response :not_found
+  end
+
+  test "edit 404s for a candidate profile that isn't the current session's" do
+    other_profile = Onboarding::CreateGuestCandidateProfileService.new.call.candidate_profile
+
+    get edit_onboarding_candidate_profile_path(other_profile)
+
+    assert_response :not_found
+  end
+
+  test "update 404s for a candidate profile that isn't the current session's, and does not save the change" do
+    other_profile = Onboarding::CreateGuestCandidateProfileService.new.call.candidate_profile
+
+    patch onboarding_candidate_profile_path(other_profile),
+      params: { page: "personal_details", candidate_profile: { phone: "0612345678" } }
+
+    assert_response :not_found
+    assert_nil other_profile.reload.phone
+  end
+
+  test "a different browser session with no candidate token cannot view the profile" do
+    open_session do |guest|
+      guest.get guest.onboarding_candidate_profile_path(@profile)
+      assert_equal 404, guest.response.status
+    end
   end
 end

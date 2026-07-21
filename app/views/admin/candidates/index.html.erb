@@ -1,0 +1,21 @@
+<% content_for :title, "Candidates" %>
+
+<div class="w-full max-w-3xl mx-auto">
+  <h1 class="text-3xl font-semibold text-gray-900">Candidates</h1>
+
+  <div class="mt-6 divide-y divide-gray-200 rounded-xl border border-gray-200">
+    <% @candidate_profiles.each do |candidate_profile| %>
+      <%= link_to admin_candidate_path(candidate_profile), class: "flex items-center justify-between px-6 py-4 hover:bg-gray-50" do %>
+        <div>
+          <p class="text-sm font-medium text-gray-900"><%= candidate_profile.user.first_name %> <%= candidate_profile.user.last_name %></p>
+          <p class="text-sm text-gray-500"><%= candidate_profile.user.email %></p>
+        </div>
+        <p class="text-xs text-gray-400"><%= candidate_profile.created_at.to_date %></p>
+      <% end %>
+    <% end %>
+
+    <% if @candidate_profiles.empty? %>
+      <p class="px-6 py-8 text-center text-sm text-gray-500">No submitted candidates yet.</p>
+    <% end %>
+  </div>
+</div>

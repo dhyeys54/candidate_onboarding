@@ -15,7 +15,8 @@ module Onboarding
 
       return Result.new(success?: false, errors: user.errors.full_messages) unless user.save
 
-      Result.new(success?: true, candidate_profile: user.create_candidate_profile!, errors: [])
+      candidate_profile = user.create_candidate_profile!(session_token: SecureRandom.hex(32))
+      Result.new(success?: true, candidate_profile: candidate_profile, errors: [])
     end
   end
 end

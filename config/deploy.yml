@@ -59,6 +59,11 @@ env:
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
 
+    # Optional post-submission notifications (Onboarding::CompleteCandidateProfileService) —
+    # both fail closed (no-op) when unset. See README's "Running the app" section.
+    # RECRUITMENT_TEAM_EMAIL: recruiting@example.com
+    # CANDIDATE_ONBOARDING_WEBHOOK_URL: https://example.com/webhooks/onboarding
+
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal logs -r job" will tail logs from the first server in the job section.
 aliases:

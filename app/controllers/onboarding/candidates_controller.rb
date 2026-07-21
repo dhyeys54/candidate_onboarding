@@ -5,6 +5,8 @@ module Onboarding
     end
 
     def create
+      return render_upload_error("Please accept the consent statement to continue.") unless params[:consent] == "1"
+
       validation_errors = Onboarding::UploadCvService.validate(params[:cv])
       return render_upload_error(validation_errors.to_sentence) if validation_errors.any?
 
@@ -14,13 +16,17 @@ module Onboarding
         return render_upload_error("Something went wrong, please try again.")
       end
 
+      candidate_profile = profile_result.candidate_profile
+      candidate_profile.update!(consent_given_at: Time.current)
+
       upload_result = Onboarding::UploadCvService.new(
-        candidate_profile: profile_result.candidate_profile,
+        candidate_profile: candidate_profile,
         uploaded_file: params[:cv]
       ).call
 
       if upload_result.success?
-        redirect_to onboarding_candidate_profile_path(profile_result.candidate_profile)
+        session[:candidate_token] = candidate_profile.session_token
+        redirect_to onboarding_candidate_profile_path(candidate_profile)
       else
         render_upload_error(upload_result.errors.to_sentence)
       end
