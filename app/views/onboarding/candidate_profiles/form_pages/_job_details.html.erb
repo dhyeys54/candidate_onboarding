@@ -1,17 +1,18 @@
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
   <div>
-    <%= field_label(form, :job_function, text: "Desired job function", candidate_profile: candidate_profile, required: true) %>
-    <%= form.select :job_function,
-          Onboarding::CandidateProfile.job_functions.keys.map { |key| [ key.humanize, key ] },
-          { include_blank: true }, class: form_input_class(candidate_profile, :job_function) %>
-    <%= field_errors(candidate_profile, :job_function) %>
+    <%= field_label(form, :job_function_id, text: "Desired job function", candidate_profile: candidate_profile, required: true) %>
+    <%= form.select :job_function_id,
+          Onboarding::JobFunction.active.ordered.pluck(:name, :id),
+          { include_blank: true }, class: form_input_class(candidate_profile, :job_function_id) %>
+    <%= field_errors(candidate_profile, :job_function_id) %>
   </div>
 </div>
 
 <h3 class="mt-8 text-base font-semibold text-gray-900">Job preferences</h3>
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
   <div class="sm:col-span-2">
-    <%= checkbox_group(candidate_profile, :regions, options: Onboarding::CandidateProfile::REGIONS,
+    <%= lookup_checkbox_group(candidate_profile, :region_ids, options: Onboarding::Region.active.ordered,
+          selected_ids: candidate_profile.selected_region_ids, error_attribute: :regions,
           label: "Preferred regions", grid_class: "grid-cols-2 sm:grid-cols-3", required: true) %>
   </div>
 

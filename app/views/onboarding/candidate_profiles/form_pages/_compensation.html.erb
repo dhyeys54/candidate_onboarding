@@ -1,8 +1,14 @@
+<%
+  salary_relevant_ids = Onboarding::EmploymentType.where(salary_relevant: true).pluck(:id)
+  percentage_relevant_ids = Onboarding::EmploymentType.where(percentage_relevant: true).pluck(:id)
+  selected_employment_types = candidate_profile.selected_employment_types
+%>
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2" data-controller="compensation-fields"
-     data-compensation-fields-salary-relevant-types-value="<%= Onboarding::CandidateProfile::SALARY_RELEVANT_EMPLOYMENT_TYPES.to_json %>"
-     data-compensation-fields-percentage-relevant-types-value="<%= Onboarding::CandidateProfile::PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES.to_json %>">
+     data-compensation-fields-salary-relevant-types-value="<%= salary_relevant_ids.to_json %>"
+     data-compensation-fields-percentage-relevant-types-value="<%= percentage_relevant_ids.to_json %>">
   <div class="sm:col-span-2">
-    <%= checkbox_group(candidate_profile, :employment_types, options: Onboarding::CandidateProfile::EMPLOYMENT_TYPES,
+    <%= lookup_checkbox_group(candidate_profile, :employment_type_ids, options: Onboarding::EmploymentType.active.ordered,
+          selected_ids: candidate_profile.selected_employment_type_ids, error_attribute: :employment_types,
           label: "Desired employment type", grid_class: "grid-cols-1 sm:grid-cols-3", required: true,
           data: { action: "change->compensation-fields#toggleEmploymentSections", "compensation-fields-target": "employmentCheckbox" }) %>
   </div>
@@ -13,21 +19,21 @@
     <%= field_errors(candidate_profile, :years_of_experience) %>
   </div>
 
-  <div class="<%= "hidden" unless (candidate_profile.employment_types & Onboarding::CandidateProfile::SALARY_RELEVANT_EMPLOYMENT_TYPES).any? %>"
+  <div class="<%= "hidden" unless selected_employment_types.any?(&:salary_relevant?) %>"
        data-compensation-fields-target="salarySection">
     <%= field_label(form, :desired_gross_salary, text: "Desired gross salary", candidate_profile: candidate_profile, required: true) %>
     <%= form.number_field :desired_gross_salary, min: 0, class: form_input_class(candidate_profile, :desired_gross_salary) %>
     <%= field_errors(candidate_profile, :desired_gross_salary) %>
   </div>
 
-  <div class="<%= "hidden" unless (candidate_profile.employment_types & Onboarding::CandidateProfile::PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES).any? %>"
+  <div class="<%= "hidden" unless selected_employment_types.any?(&:percentage_relevant?) %>"
        data-compensation-fields-target="percentageSection">
     <%= field_label(form, :desired_percentage, text: "Desired percentage", candidate_profile: candidate_profile, required: true) %>
     <%= form.number_field :desired_percentage, min: 0, max: 100, step: 0.01, class: form_input_class(candidate_profile, :desired_percentage) %>
     <%= field_errors(candidate_profile, :desired_percentage) %>
   </div>
 
-  <% if Onboarding::CandidateProfile::REVENUE_RELEVANT_JOB_FUNCTIONS.include?(candidate_profile.job_function) %>
+  <% if candidate_profile.job_function&.revenue_relevant? %>
     <div>
       <%= field_label(form, :average_daily_revenue, candidate_profile: candidate_profile, required: true) %>
       <%= form.number_field :average_daily_revenue, min: 0, class: form_input_class(candidate_profile, :average_daily_revenue) %>
@@ -35,7 +41,7 @@
     </div>
   <% end %>
 
-  <% if Onboarding::CandidateProfile::BIG_RELEVANT_JOB_FUNCTIONS.include?(candidate_profile.job_function) %>
+  <% if candidate_profile.job_function&.big_relevant? %>
     <div>
       <%= field_label(form, :big_registration_status, candidate_profile: candidate_profile, required: true) %>
       <%= form.select :big_registration_status,

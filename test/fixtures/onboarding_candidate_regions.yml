@@ -1,0 +1,6 @@
+_fixture:
+  model_class: Onboarding::CandidateRegion
+
+draft_profile_north:
+  candidate_profile: draft_profile
+  region: north

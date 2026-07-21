@@ -4,5 +4,8 @@ module Onboarding
     has_many :candidate_profiles, through: :candidate_languages
 
     validates :name, presence: true, uniqueness: true
+
+    scope :active, -> { where(active: true) }
+    scope :ordered, -> { order(:name) }
   end
 end

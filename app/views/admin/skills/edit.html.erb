@@ -1,0 +1,7 @@
+<% content_for :title, "Edit skill" %>
+
+<div class="w-full max-w-xl mx-auto">
+  <%= render "admin/shared/nav" %>
+  <h1 class="text-3xl font-semibold text-gray-900">Edit skill</h1>
+  <%= render "form", resource: @resource, url: admin_skill_path(@resource) %>
+</div>

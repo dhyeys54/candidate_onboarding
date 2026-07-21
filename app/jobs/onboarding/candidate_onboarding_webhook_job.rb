@@ -30,7 +30,7 @@ module Onboarding
           first_name: user.first_name,
           last_name: user.last_name,
           email: user.email,
-          job_function: candidate_profile.job_function
+          job_function: candidate_profile.job_function&.key
         }
       }
     end

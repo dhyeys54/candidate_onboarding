@@ -80,8 +80,11 @@ fails closed, so the UI stays inaccessible until both are set).
 
 The `/admin` namespace (staff-only) is likewise protected by HTTP Basic Auth via `Admin::BaseController`.
 Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in the environment to enable access (same fail-closed behavior
-when unset). It currently exposes a minimal candidate list/detail view (`/admin/candidates`), scoped to
-submitted profiles only, with a CV download action.
+when unset). It exposes a minimal candidate list/detail view (`/admin/candidates`), scoped to submitted
+profiles only, with a CV download action, plus CRUD management of the onboarding form's option lists —
+job functions, regions, employment types, skills, and languages (`/admin/job_functions`, `/admin/regions`,
+`/admin/employment_types`, `/admin/skills`, `/admin/languages`) — so these can be edited without a code
+deploy. See `Onboarding::JobFunction`/`Region`/`EmploymentType`/`Skill`/`Language`.
 
 When a candidate saves the last page of the onboarding review form, `Onboarding::CompleteCandidateProfileService`
 marks their profile submitted and fires two optional, independently-configured side effects (both are

@@ -1,0 +1,58 @@
+_fixture:
+  model_class: Onboarding::JobFunction
+
+general_dentist:
+  key: general_dentist
+  name: General Dentist
+  active: true
+  big_relevant: true
+  revenue_relevant: true
+
+dental_hygienist:
+  key: dental_hygienist
+  name: Dental Hygienist
+  active: true
+  big_relevant: true
+  revenue_relevant: true
+
+dental_assistant:
+  key: dental_assistant
+  name: Dental Assistant
+  active: true
+
+prevention_assistant:
+  key: prevention_assistant
+  name: Prevention Assistant
+  active: true
+
+paro_prevention_assistant:
+  key: paro_prevention_assistant
+  name: Paro Prevention Assistant
+  active: true
+
+orthodontic_assistant:
+  key: orthodontic_assistant
+  name: Orthodontic Assistant
+  active: true
+
+front_office_receptionist:
+  key: front_office_receptionist
+  name: Front Office Receptionist
+  active: true
+
+practice_manager:
+  key: practice_manager
+  name: Practice Manager
+  active: true
+
+dental_technician:
+  key: dental_technician
+  name: Dental Technician
+  active: true
+
+specialist:
+  key: specialist
+  name: Specialist
+  active: true
+  big_relevant: true
+  revenue_relevant: true

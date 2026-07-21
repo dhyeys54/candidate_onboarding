@@ -1,0 +1,22 @@
+_fixture:
+  model_class: Onboarding::Region
+
+north:
+  name: North
+  active: true
+
+south:
+  name: South
+  active: true
+
+east:
+  name: East
+  active: true
+
+west:
+  name: West
+  active: true
+
+central:
+  name: Central
+  active: true

@@ -43,7 +43,9 @@ module Onboarding
         (?:combined\s+|relevant\s+|dental\s+|professional\s+|work\s+|werk\s+)*
         (?:experience|ervaring|werkervaring)
       /ix
-      DATE_RANGE_REGEX = /(\d{4})\s*(?:[-–—]|tot|to|until)\s*(\d{4}|present|heden|current|nu)/i
+      # Optional leading month name/abbreviation on either side handles "Oct 2024 – Jul 2026"-style
+      # ranges, not just bare "2019 - 2022" years — common in non-dentist (e.g. software) CV formats.
+      DATE_RANGE_REGEX = /(?:[A-Za-z]+\.?\s+)?(\d{4})\s*(?:[-–—]|tot|to|until)\s*(?:[A-Za-z]+\.?\s+)?(\d{4}|present|heden|current|nu)/i
       EDUCATION_LEVEL_PATTERNS = {
         /\bmbo\b/i => :mbo,
         /\bhbo\b/i => :hbo,
@@ -113,7 +115,9 @@ module Onboarding
         candidate_line = lines.first(5).find { |line| name_like?(line) }
         return {} unless candidate_line
 
-        tokens = candidate_line.split
+        # Drop middle initials ("M.") entirely rather than folding them into last_name — they were
+        # only needed to recognize the line as a name, not to populate the name fields.
+        tokens = candidate_line.split.reject { |token| middle_initial?(token) }
         confidence = lines.first(2).include?(candidate_line) ? :high : :low
 
         {
@@ -122,6 +126,9 @@ module Onboarding
         }
       end
 
+      # A middle initial ("M.") fails capitalized_word? (its trailing period isn't a valid trailing
+      # char), which used to reject the whole name line — falling through to the next lines.first(5)
+      # candidate and misreading e.g. a job-title line as the name instead.
       def name_like?(line)
         return false if line.length > 60 || line.match?(/[@\d]/)
 
@@ -129,11 +136,15 @@ module Onboarding
         return false unless (2..5).cover?(tokens.size)
         return false unless capitalized_word?(tokens.first) && capitalized_word?(tokens.last)
 
-        tokens[1..-2].all? { |token| capitalized_word?(token) || NAME_INFIXES.include?(token.downcase) }
+        tokens[1..-2].all? { |token| capitalized_word?(token) || NAME_INFIXES.include?(token.downcase) || middle_initial?(token) }
       end
 
       def capitalized_word?(token)
         token.match?(/\A\p{Lu}[\p{L}'-]+\z/)
+      end
+
+      def middle_initial?(token)
+        token.match?(/\A\p{Lu}\.\z/)
       end
 
       # Among aliases that match at all, prefer an "exact" match_type over "keyword", and — within
@@ -260,15 +271,34 @@ module Onboarding
         ExtractedValue.new(value: names, confidence: :low, matched_pattern: "languages_section_heuristic")
       end
 
+      # A date-range line marks where a new entry's header sits, but the header's other lines
+      # (company/title) can appear *before* it rather than on it — see parse_work_experience_entry.
+      # So a new group's start is walked backward from each date-range line as long as the
+      # preceding lines still look like header text, rather than starting the group exactly at the
+      # date line. Falls back to a single group when no date range is found anywhere in the section.
       def group_lines_by_date_range(body)
-        groups = []
+        anchor_indices = body.each_index.select { |i| body[i].match?(DATE_RANGE_REGEX) }
+        return [ body ] if anchor_indices.empty?
 
-        body.each do |line|
-          groups << [] if groups.empty? || line.match?(DATE_RANGE_REGEX)
-          groups.last << line
+        block_starts = anchor_indices.each_with_index.map do |anchor_index, i|
+          floor = i.zero? ? 0 : anchor_indices[i - 1] + 1
+          start_index = anchor_index
+          start_index -= 1 while start_index > floor && header_line?(body[start_index - 1])
+          start_index
         end
 
-        groups
+        block_starts.each_with_index.map do |start_index, i|
+          end_index = i + 1 < block_starts.size ? block_starts[i + 1] - 1 : body.size - 1
+          body[start_index..end_index]
+        end
+      end
+
+      # Heuristic for "this line is more header text, not a wrapped bullet/description line": short,
+      # doesn't start with a bullet marker, and starts with an uppercase letter or digit — wrapped
+      # continuation text (a bullet line that word-wrapped onto the next physical line) conventionally
+      # starts lowercase since it's mid-sentence, which reliably tells the two apart in practice.
+      def header_line?(line)
+        line.length < 80 && !line.match?(/\A[●•*\-]/) && line.match?(/\A[\p{Lu}\d]/)
       end
 
       def parse_education_entry(group)
@@ -288,26 +318,50 @@ module Onboarding
         { institution: institution, study: study, level: level, start_date: start_date, end_date: end_date }
       end
 
+      # Two header shapes show up in the wild: a "dentist" single-line shape where the date shares a
+      # line with the title/company ("2019 - 2022 Dentist, Smile Clinic Amsterdam"), and a multi-line
+      # shape common in software-style resumes where a right-aligned date gets column-split onto its
+      # own line, with the job title directly above it and the company above that ("Deqode, Indore" /
+      # "Solution Engineer" / "Oct 2024 - Jul 2026"). Distinguish them by whether anything is left on
+      # the date line once the date itself is stripped out.
       def parse_work_experience_entry(group)
-        header = group.first
-        date_match = header.match(DATE_RANGE_REGEX)
+        date_line_index = group.index { |line| line.match?(DATE_RANGE_REGEX) }
+
+        if date_line_index.nil?
+          job_title, company_name = header_title_and_company(group.first)
+          responsibilities_from = 1
+        else
+          date_line = group[date_line_index]
+          same_line_remainder = clean_text_fragment(date_line.sub(DATE_RANGE_REGEX, ""))
+          responsibilities_from = date_line_index + 1
+
+          if same_line_remainder.present?
+            job_title, company_name = header_title_and_company(same_line_remainder)
+          elsif date_line_index.positive?
+            job_title = clean_text_fragment(group[date_line_index - 1])
+            company_name = group[0...(date_line_index - 1)]
+              .map { |line| clean_text_fragment(line) }.reject(&:blank?).join(", ").presence
+          else
+            return
+          end
+        end
+        return if company_name.blank?
+
+        date_match = date_line_index && group[date_line_index].match(DATE_RANGE_REGEX)
         start_date, end_date = parse_date_range(date_match)
         current_job = date_match ? date_match[2].match?(/present|heden|current|nu/i) : false
 
-        remainder = header.sub(DATE_RANGE_REGEX, "")
-        parts = remainder.split(/,| \| | - | at | bij | voor /i).map { |part| clean_text_fragment(part) }.reject(&:blank?)
-        return if parts.empty?
-
-        job_title = parts.first
-        company_name = parts[1]
-        return if company_name.blank?
-
-        responsibilities = group[1..].to_a.map { |line| clean_text_fragment(line) }.reject(&:blank?).join(" ")
+        responsibilities = group[responsibilities_from..].to_a.map { |line| clean_text_fragment(line) }.reject(&:blank?).join(" ")
 
         {
           job_title: job_title, company_name: company_name, responsibilities: responsibilities.presence,
           start_date: start_date, end_date: end_date, current_job: current_job
         }
+      end
+
+      def header_title_and_company(text)
+        parts = text.to_s.split(/,| \| | - | at | bij | voor /i).map { |part| clean_text_fragment(part) }.reject(&:blank?)
+        [ parts.first, parts[1] ]
       end
 
       def clean_text_fragment(text)

@@ -46,8 +46,8 @@ class Onboarding::CvParsing::ProfileMapperTest < ActiveSupport::TestCase
     Onboarding::CvParsing::ProfileMapper.new(document, extracted).call
     profile.reload
 
-    assert_equal "general_dentist", profile.job_function
-    assert_not profile.extracted_fields.key?("job_function")
+    assert_equal onboarding_job_functions(:general_dentist), profile.job_function
+    assert_not profile.extracted_fields.key?("job_function_id")
   end
 
   test "applies extracted big_registration_status and years_of_experience" do
@@ -228,7 +228,7 @@ class Onboarding::CvParsing::ProfileMapperTest < ActiveSupport::TestCase
 
   test "matches an extracted skill name case-insensitively" do
     profile = build_guest_profile
-    profile.update!(job_function: "general_dentist")
+    profile.update!(job_function: onboarding_job_functions(:general_dentist))
     document = build_document(profile)
     extracted = { skill_names: value([ "endodontics" ]) }
 
@@ -240,7 +240,7 @@ class Onboarding::CvParsing::ProfileMapperTest < ActiveSupport::TestCase
 
   test "stores an unmatched skill name as a free-text suggestion instead of dropping it" do
     profile = build_guest_profile
-    profile.update!(job_function: "general_dentist")
+    profile.update!(job_function: onboarding_job_functions(:general_dentist))
     document = build_document(profile)
     extracted = { skill_names: value([ "3D printing" ]) }
 
@@ -254,7 +254,7 @@ class Onboarding::CvParsing::ProfileMapperTest < ActiveSupport::TestCase
 
   test "does not match a skill name against a different job_function's skill list" do
     profile = build_guest_profile
-    profile.update!(job_function: "dental_technician")
+    profile.update!(job_function: onboarding_job_functions(:dental_technician))
     document = build_document(profile)
     extracted = { skill_names: value([ "Endodontics" ]) }
 

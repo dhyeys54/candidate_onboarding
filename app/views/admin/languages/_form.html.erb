@@ -1,0 +1,23 @@
+<%= form_with model: resource, url: url, class: "mt-6 space-y-4" do |form| %>
+  <% if resource.errors.any? %>
+    <div class="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+      <ul class="list-disc pl-5">
+        <% resource.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :name, class: form_label_class %>
+    <%= form.text_field :name, class: form_input_class %>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <%= form.check_box :active, class: "rounded border-gray-300" %>
+    <%= form.label :active, "Active (shown to candidates)", class: "text-sm text-gray-700" %>
+  </div>
+
+  <%= form.submit class: "inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500" %>
+<% end %>

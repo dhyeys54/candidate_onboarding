@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_21_080005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
     t.index ["candidate_profile_id"], name: "index_onboarding_candidate_documents_on_candidate_profile_id"
   end
 
+  create_table "onboarding_candidate_employment_types", force: :cascade do |t|
+    t.bigint "candidate_profile_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "employment_type_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["candidate_profile_id", "employment_type_id"], name: "index_onboarding_candidate_employment_types_on_profile_and_type", unique: true
+    t.index ["candidate_profile_id"], name: "idx_on_candidate_profile_id_df622a9ae0"
+    t.index ["employment_type_id"], name: "idx_on_employment_type_id_882d974814"
+  end
+
   create_table "onboarding_candidate_languages", force: :cascade do |t|
     t.bigint "candidate_profile_id", null: false
     t.datetime "created_at", null: false
@@ -77,10 +87,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
     t.datetime "created_at", null: false
     t.integer "desired_gross_salary"
     t.decimal "desired_percentage", precision: 5, scale: 2
-    t.string "employment_types", default: [], null: false, array: true
     t.jsonb "extracted_fields", default: {}, null: false
     t.text "internal_notes"
-    t.integer "job_function"
+    t.bigint "job_function_id"
     t.integer "max_travel_time_minutes"
     t.text "motivation_for_employer"
     t.string "notice_period"
@@ -88,7 +97,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
     t.string "phone"
     t.text "reason_for_change"
     t.text "reason_for_looking"
-    t.string "regions", default: [], null: false, array: true
     t.integer "search_status"
     t.string "session_token"
     t.text "suggested_summary"
@@ -97,8 +105,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
     t.bigint "user_id", null: false
     t.string "working_days", default: [], null: false, array: true
     t.integer "years_of_experience"
+    t.index ["job_function_id"], name: "index_onboarding_candidate_profiles_on_job_function_id"
     t.index ["session_token"], name: "index_onboarding_candidate_profiles_on_session_token", unique: true
     t.index ["user_id"], name: "index_onboarding_candidate_profiles_on_user_id", unique: true
+  end
+
+  create_table "onboarding_candidate_regions", force: :cascade do |t|
+    t.bigint "candidate_profile_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "region_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["candidate_profile_id", "region_id"], name: "index_onboarding_candidate_regions_on_profile_and_region", unique: true
+    t.index ["candidate_profile_id"], name: "index_onboarding_candidate_regions_on_candidate_profile_id"
+    t.index ["region_id"], name: "index_onboarding_candidate_regions_on_region_id"
   end
 
   create_table "onboarding_candidate_skills", force: :cascade do |t|
@@ -146,6 +165,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
     t.index ["candidate_profile_id"], name: "index_onboarding_educations_on_candidate_profile_id"
   end
 
+  create_table "onboarding_employment_types", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.boolean "percentage_relevant", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "salary_relevant", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_onboarding_employment_types_on_name", unique: true
+  end
+
+  create_table "onboarding_job_functions", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.boolean "big_relevant", default: false, null: false
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "revenue_relevant", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_onboarding_job_functions_on_key", unique: true
+  end
+
   create_table "onboarding_languages", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
@@ -154,13 +196,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
     t.index ["name"], name: "index_onboarding_languages_on_name", unique: true
   end
 
+  create_table "onboarding_regions", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_onboarding_regions_on_name", unique: true
+  end
+
   create_table "onboarding_skills", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
-    t.integer "job_function"
+    t.bigint "job_function_id"
     t.string "name", null: false
     t.datetime "updated_at", null: false
-    t.index ["name", "job_function"], name: "index_onboarding_skills_on_name_and_job_function", unique: true
+    t.index ["job_function_id"], name: "index_onboarding_skills_on_job_function_id"
   end
 
   create_table "onboarding_work_experiences", force: :cascade do |t|
@@ -189,12 +240,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_071502) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "onboarding_candidate_documents", "onboarding_candidate_profiles", column: "candidate_profile_id"
+  add_foreign_key "onboarding_candidate_employment_types", "onboarding_candidate_profiles", column: "candidate_profile_id"
+  add_foreign_key "onboarding_candidate_employment_types", "onboarding_employment_types", column: "employment_type_id"
   add_foreign_key "onboarding_candidate_languages", "onboarding_candidate_profiles", column: "candidate_profile_id"
   add_foreign_key "onboarding_candidate_languages", "onboarding_languages", column: "language_id"
+  add_foreign_key "onboarding_candidate_profiles", "onboarding_job_functions", column: "job_function_id"
   add_foreign_key "onboarding_candidate_profiles", "users"
+  add_foreign_key "onboarding_candidate_regions", "onboarding_candidate_profiles", column: "candidate_profile_id"
+  add_foreign_key "onboarding_candidate_regions", "onboarding_regions", column: "region_id"
   add_foreign_key "onboarding_candidate_skills", "onboarding_candidate_profiles", column: "candidate_profile_id"
   add_foreign_key "onboarding_candidate_skills", "onboarding_skills", column: "skill_id"
   add_foreign_key "onboarding_cv_field_extractions", "onboarding_candidate_documents", column: "candidate_document_id"
   add_foreign_key "onboarding_educations", "onboarding_candidate_profiles", column: "candidate_profile_id"
+  add_foreign_key "onboarding_skills", "onboarding_job_functions", column: "job_function_id"
   add_foreign_key "onboarding_work_experiences", "onboarding_candidate_profiles", column: "candidate_profile_id"
 end

@@ -8,6 +8,53 @@
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
 
+# Onboarding::JobFunction / Region / EmploymentType — admin-manageable option lists shown on the
+# Job Details / Compensation onboarding pages (see Onboarding::FormPages::JobDetailsPage/
+# CompensationPage) and matched against by the CV parser's alias dictionary below. `key` on
+# JobFunction is a stable machine slug (matched by CvExtractionAlias/webhook consumers); `name` is
+# the display label. big_relevant/revenue_relevant and salary_relevant/percentage_relevant drive the
+# Compensation page's conditional fields.
+job_functions = [
+  { key: "general_dentist", name: "General Dentist", big_relevant: true, revenue_relevant: true },
+  { key: "dental_hygienist", name: "Dental Hygienist", big_relevant: true, revenue_relevant: true },
+  { key: "dental_assistant", name: "Dental Assistant" },
+  { key: "prevention_assistant", name: "Prevention Assistant" },
+  { key: "paro_prevention_assistant", name: "Paro Prevention Assistant" },
+  { key: "orthodontic_assistant", name: "Orthodontic Assistant" },
+  { key: "front_office_receptionist", name: "Front Office Receptionist" },
+  { key: "practice_manager", name: "Practice Manager" },
+  { key: "dental_technician", name: "Dental Technician" },
+  { key: "specialist", name: "Specialist", big_relevant: true, revenue_relevant: true }
+]
+
+job_functions.each_with_index do |attrs, index|
+  Onboarding::JobFunction.find_or_create_by!(key: attrs[:key]) do |job_function|
+    job_function.name = attrs[:name]
+    job_function.position = index
+    job_function.big_relevant = attrs.fetch(:big_relevant, false)
+    job_function.revenue_relevant = attrs.fetch(:revenue_relevant, false)
+  end
+end
+
+%w[North South East West Central].each_with_index do |name, index|
+  Onboarding::Region.find_or_create_by!(name: name) { |region| region.position = index }
+end
+
+employment_types = [
+  { name: "Employed", salary_relevant: true },
+  { name: "Self Employed", percentage_relevant: true },
+  { name: "Freelance", percentage_relevant: true },
+  { name: "Percentage Based", percentage_relevant: true }
+]
+
+employment_types.each_with_index do |attrs, index|
+  Onboarding::EmploymentType.find_or_create_by!(name: attrs[:name]) do |employment_type|
+    employment_type.position = index
+    employment_type.salary_relevant = attrs.fetch(:salary_relevant, false)
+    employment_type.percentage_relevant = attrs.fetch(:percentage_relevant, false)
+  end
+end
+
 # Onboarding::CvExtractionAlias — starter dictionary the rule-based CV FieldExtractor consults for
 # job_function/country/city matching. "exact" entries are precise job-title/name matches (high
 # extraction confidence); "keyword" entries are looser substrings (low confidence). Grow this over
@@ -153,7 +200,9 @@ skills_by_job_function = {
   dental_technician: [ "Prosthetics", "CAD/CAM", "Crown and bridge work" ]
 }
 
-skills_by_job_function.each do |job_function, names|
+skills_by_job_function.each do |job_function_key, names|
+  job_function = Onboarding::JobFunction.find_by!(key: job_function_key)
+
   names.each do |name|
     Onboarding::Skill.find_or_create_by!(name: name, job_function: job_function)
   end

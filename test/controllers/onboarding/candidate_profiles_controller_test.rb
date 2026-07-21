@@ -9,8 +9,10 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
     post onboarding_candidates_path,
       params: { consent: "1", cv: uploaded_file("sample_cv.pdf", content_type: "application/pdf") }
     @profile = Onboarding::CandidateProfile.last
-    @profile.update!(job_function: "general_dentist", regions: [ "north" ],
-                      employment_types: [ "employed" ], working_days: [ "monday" ])
+    @profile.update!(job_function: onboarding_job_functions(:general_dentist),
+                      region_ids: [ onboarding_regions(:north).id ],
+                      employment_type_ids: [ onboarding_employment_types(:employed).id ],
+                      working_days: [ "monday" ])
     @profile.candidate_languages.create!(language: onboarding_languages(:english), proficiency: "native")
   end
 
@@ -170,13 +172,13 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
     assert_equal 5, profile.reload.years_of_experience
   end
 
-  test "update on the last page has no next page to advance to" do
+  test "update on the last page redirects to the thank-you page" do
     profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "additional_information", candidate_profile: { suggested_summary: "Great candidate" } }
 
-    assert_redirected_to edit_onboarding_candidate_profile_path(profile, page: "additional_information")
+    assert_redirected_to complete_onboarding_candidate_profile_path(profile)
   end
 
   test "update on the last page marks the profile submitted" do
@@ -202,7 +204,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "job_details",
-                candidate_profile: { job_function: "", regions: [], max_travel_time_minutes: "", search_status: "" } }
+                candidate_profile: { job_function_id: "", region_ids: [], max_travel_time_minutes: "", search_status: "" } }
 
     assert_response :unprocessable_entity
     assert_select "li", "Job function can't be blank"
@@ -216,8 +218,8 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "job_details",
-                candidate_profile: { job_function: "dental_assistant",
-                                      regions: [ "north" ], max_travel_time_minutes: 30,
+                candidate_profile: { job_function_id: onboarding_job_functions(:dental_assistant).id,
+                                      region_ids: [ onboarding_regions(:north).id ], max_travel_time_minutes: 30,
                                       search_status: "active", transport_types: [ "car" ],
                                       reason_for_looking: "Looking for growth" } }
 
@@ -231,22 +233,24 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update accepts a real browser submission with the job_details checkbox groups' blank hidden fallback field" do
     profile = @profile
+    north = onboarding_regions(:north)
+    dental_assistant = onboarding_job_functions(:dental_assistant)
 
     patch onboarding_candidate_profile_path(profile),
       params: URI.encode_www_form([
         [ "page", "job_details" ],
-        [ "candidate_profile[job_function]", "dental_assistant" ],
+        [ "candidate_profile[job_function_id]", dental_assistant.id ],
         [ "candidate_profile[max_travel_time_minutes]", "30" ],
         [ "candidate_profile[search_status]", "active" ],
-        [ "candidate_profile[regions][]", "north" ],
-        [ "candidate_profile[regions][]", "" ],
+        [ "candidate_profile[region_ids][]", north.id ],
+        [ "candidate_profile[region_ids][]", "" ],
         [ "candidate_profile[transport_types][]", "car" ],
         [ "candidate_profile[transport_types][]", "" ]
       ]),
       headers: { "Content-Type" => "application/x-www-form-urlencoded" }
 
     assert_redirected_to edit_onboarding_candidate_profile_path(profile, page: "compensation")
-    assert_equal [ "north" ], profile.reload.regions
+    assert_equal [ "North" ], profile.reload.regions.pluck(:name)
     assert_equal [ "car" ], profile.transport_types
   end
 
@@ -254,7 +258,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
     profile = @profile
 
     patch onboarding_candidate_profile_path(profile),
-      params: { page: "compensation", candidate_profile: { employment_types: [], years_of_experience: "" } }
+      params: { page: "compensation", candidate_profile: { employment_type_ids: [], years_of_experience: "" } }
 
     assert_response :unprocessable_entity
     assert_select "li", "Employment types must have at least one selected"
@@ -266,7 +270,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
-                candidate_profile: { employment_types: [ "employed" ], years_of_experience: 5,
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:employed).id ], years_of_experience: 5,
                                       desired_gross_salary: "" } }
 
     assert_response :unprocessable_entity
@@ -278,7 +282,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
-                candidate_profile: { employment_types: [ "self_employed" ], years_of_experience: 5,
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:self_employed).id ], years_of_experience: 5,
                                       desired_percentage: "" } }
 
     assert_response :unprocessable_entity
@@ -287,11 +291,11 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update requires average_daily_revenue for revenue-relevant job functions" do
     profile = @profile
-    profile.update!(job_function: "general_dentist")
+    profile.update!(job_function: onboarding_job_functions(:general_dentist))
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
-                candidate_profile: { employment_types: [ "employed" ], years_of_experience: 5,
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:employed).id ], years_of_experience: 5,
                                       desired_gross_salary: 3000, average_daily_revenue: "",
                                       big_registration_status: "not_applicable" } }
 
@@ -301,14 +305,29 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update does not require average_daily_revenue for non-revenue-relevant job functions" do
     profile = @profile
-    profile.update!(job_function: "prevention_assistant")
+    profile.update!(job_function: onboarding_job_functions(:prevention_assistant))
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
-                candidate_profile: { employment_types: [ "employed" ], years_of_experience: 5,
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:employed).id ], years_of_experience: 5,
                                       desired_gross_salary: 3000, average_daily_revenue: "" } }
 
     assert_response :found
+  end
+
+  test "update rejects a non-numeric average_daily_revenue instead of silently saving 0" do
+    profile = @profile
+    profile.update!(job_function: onboarding_job_functions(:general_dentist))
+
+    patch onboarding_candidate_profile_path(profile),
+      params: { page: "compensation",
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:employed).id ], years_of_experience: 5,
+                                      desired_gross_salary: 3000, average_daily_revenue: "abc",
+                                      big_registration_status: "not_applicable" } }
+
+    assert_response :unprocessable_entity
+    assert_select "li", "Average daily revenue is not a number"
+    assert_nil profile.reload.average_daily_revenue
   end
 
   test "update requires desired_percentage when percentage_based employment type is selected" do
@@ -316,7 +335,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
-                candidate_profile: { employment_types: [ "percentage_based" ], years_of_experience: 5,
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:percentage_based).id ], years_of_experience: 5,
                                       desired_percentage: "" } }
 
     assert_response :unprocessable_entity
@@ -325,11 +344,11 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update requires big_registration_status for BIG-relevant job functions" do
     profile = @profile
-    profile.update!(job_function: "general_dentist")
+    profile.update!(job_function: onboarding_job_functions(:general_dentist))
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
-                candidate_profile: { employment_types: [ "employed" ], years_of_experience: 5,
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:employed).id ], years_of_experience: 5,
                                       desired_gross_salary: 3000, average_daily_revenue: 100,
                                       big_registration_status: "" } }
 
@@ -339,11 +358,11 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update requires big_number when big_registration_status is big_registered" do
     profile = @profile
-    profile.update!(job_function: "general_dentist")
+    profile.update!(job_function: onboarding_job_functions(:general_dentist))
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
-                candidate_profile: { employment_types: [ "employed" ], years_of_experience: 5,
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:employed).id ], years_of_experience: 5,
                                       desired_gross_salary: 3000, average_daily_revenue: 100,
                                       big_registration_status: "big_registered", big_number: "" } }
 
@@ -353,11 +372,11 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update saves compensation fields and advances to the next page" do
     profile = @profile
-    profile.update!(job_function: "general_dentist")
+    profile.update!(job_function: onboarding_job_functions(:general_dentist))
 
     patch onboarding_candidate_profile_path(profile),
       params: { page: "compensation",
-                candidate_profile: { employment_types: [ "employed" ], years_of_experience: 5,
+                candidate_profile: { employment_type_ids: [ onboarding_employment_types(:employed).id ], years_of_experience: 5,
                                       desired_gross_salary: 3000, average_daily_revenue: 100,
                                       big_registration_status: "not_applicable" } }
 
@@ -366,20 +385,21 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update accepts a real browser submission with the compensation checkbox group's blank hidden fallback field" do
     profile = @profile
-    profile.update!(job_function: "dental_technician")
+    profile.update!(job_function: onboarding_job_functions(:dental_technician))
+    employed = onboarding_employment_types(:employed)
 
     patch onboarding_candidate_profile_path(profile),
       params: URI.encode_www_form([
         [ "page", "compensation" ],
         [ "candidate_profile[years_of_experience]", "5" ],
         [ "candidate_profile[desired_gross_salary]", "3000" ],
-        [ "candidate_profile[employment_types][]", "employed" ],
-        [ "candidate_profile[employment_types][]", "" ]
+        [ "candidate_profile[employment_type_ids][]", employed.id ],
+        [ "candidate_profile[employment_type_ids][]", "" ]
       ]),
       headers: { "Content-Type" => "application/x-www-form-urlencoded" }
 
     assert_redirected_to edit_onboarding_candidate_profile_path(profile, page: "education")
-    assert_equal [ "employed" ], profile.reload.employment_types
+    assert_equal [ "Employed" ], profile.reload.employment_types.pluck(:name)
   end
 
   test "update saves education fields and advances to the next page" do
@@ -411,7 +431,7 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
 
   test "update saves skills fields and advances to the next page" do
     profile = @profile
-    profile.update!(job_function: "dental_technician")
+    profile.update!(job_function: onboarding_job_functions(:dental_technician))
     skill = onboarding_skills(:dental_technician_prosthetics)
 
     patch onboarding_candidate_profile_path(profile),
@@ -494,5 +514,31 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
       guest.get guest.onboarding_candidate_profile_path(@profile)
       assert_equal 404, guest.response.status
     end
+  end
+
+  test "complete renders the thank-you page once the profile is submitted" do
+    profile = @profile
+    profile.update!(onboarding_status: :submitted)
+
+    get complete_onboarding_candidate_profile_path(profile)
+
+    assert_response :success
+    assert_select "p", /Thank you/
+  end
+
+  test "complete redirects back to edit when the profile hasn't been submitted yet" do
+    profile = @profile
+
+    get complete_onboarding_candidate_profile_path(profile)
+
+    assert_redirected_to edit_onboarding_candidate_profile_path(profile)
+  end
+
+  test "complete 404s for a candidate profile that isn't the current session's" do
+    other_profile = Onboarding::CreateGuestCandidateProfileService.new.call.candidate_profile
+
+    get complete_onboarding_candidate_profile_path(other_profile)
+
+    assert_response :not_found
   end
 end

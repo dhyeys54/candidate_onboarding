@@ -32,13 +32,10 @@ module Onboarding
     # across the page partials. `candidate_profile:` is the record extracted_fields lives on, which
     # for identity fields (first_name/last_name/email) is still the candidate_profile, not the user.
     def field_label(form, attribute, text: nil, candidate_profile: nil, required: false)
-      content_tag :div, class: "flex items-center justify-between" do
-        concat(
-          form.label(attribute, nil, class: form_label_class) do
-            safe_join([ text || attribute.to_s.humanize, required_marker(required) ].compact)
-          end
-        )
-        concat extracted_field_badge(candidate_profile, attribute) if candidate_profile
+      badge = extracted_field_badge(candidate_profile, attribute) if candidate_profile
+
+      form.label(attribute, nil, class: form_label_class) do
+        safe_join([ text || attribute.to_s.humanize, required_marker(required), badge ].compact)
       end
     end
 
@@ -48,11 +45,10 @@ module Onboarding
       content_tag :span, " *", class: "text-red-500"
     end
 
-    # Renders a candidate_profile array-attribute (regions/transport_types/employment_types/
-    # working_days) as a checkbox group, plus the trailing hidden fallback field real submissions
-    # need so unchecking every box still submits the key (see
-    # CandidateProfile#strip_blank_array_values). `data` is for wiring up a Stimulus target/action
-    # on each checkbox (e.g. the Compensation page's employment_types toggle).
+    # Renders a candidate_profile string-array attribute (transport_types/working_days) as a
+    # checkbox group, plus the trailing hidden fallback field real submissions need so unchecking
+    # every box still submits the key (see CandidateProfile#strip_blank_array_values). `data` is for
+    # wiring up a Stimulus target/action on each checkbox.
     def checkbox_group(candidate_profile, attribute, options:, label:, grid_class: "grid-cols-2 sm:grid-cols-3", required: false, data: {})
       selected = Array(candidate_profile.public_send(attribute))
 
@@ -65,6 +61,24 @@ module Onboarding
           )
         end,
         field_errors(candidate_profile, attribute)
+      ])
+    end
+
+    # Same as checkbox_group, but for a DB-backed lookup list (regions/employment_types — see
+    # Onboarding::Region/EmploymentType): checkbox values are record ids rather than raw strings, and
+    # the field submitted (`name`, e.g. :region_ids) is often not the same as the attribute errors are
+    # added to (`error_attribute`, e.g. :regions — see Onboarding::FormPages::JobDetailsPage#validate),
+    # since Rails doesn't humanize a plural "_ids" suffix the way it does a singular "_id".
+    def lookup_checkbox_group(candidate_profile, name, options:, selected_ids:, label:, error_attribute: name, grid_class: "grid-cols-2 sm:grid-cols-3", required: false, data: {})
+      safe_join([
+        content_tag(:span, safe_join([ label, required_marker(required) ].compact), class: form_label_class),
+        content_tag(:div, class: "mt-1 grid #{grid_class} gap-2") do
+          safe_join(
+            options.map { |option| lookup_checkbox_group_option(name, option, selected_ids.include?(option.id), data) } +
+              [ hidden_field_tag("candidate_profile[#{name}][]", "") ]
+          )
+        end,
+        field_errors(candidate_profile, error_attribute)
       ])
     end
 
@@ -101,6 +115,14 @@ module Onboarding
         checkbox = check_box_tag "candidate_profile[#{attribute}][]", option, checked,
           id: "candidate_profile_#{attribute}_#{option}", class: "rounded border-gray-300", data: data
         safe_join([ checkbox, option.humanize ])
+      end
+    end
+
+    def lookup_checkbox_group_option(name, option, checked, data)
+      content_tag :label, class: "flex items-center gap-2 text-sm text-gray-700" do
+        checkbox = check_box_tag "candidate_profile[#{name}][]", option.id, checked,
+          id: "candidate_profile_#{name}_#{option.id}", class: "rounded border-gray-300", data: data
+        safe_join([ checkbox, option.name ])
       end
     end
   end

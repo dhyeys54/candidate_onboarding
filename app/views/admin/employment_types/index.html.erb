@@ -1,0 +1,37 @@
+<% content_for :title, "Employment types" %>
+
+<div class="w-full max-w-3xl mx-auto">
+  <%= render "admin/shared/nav" %>
+
+  <div class="flex items-center justify-between">
+    <h1 class="text-3xl font-semibold text-gray-900">Employment types</h1>
+    <%= link_to "+ Add employment type", new_admin_employment_type_path, class: "text-sm font-medium text-indigo-600 hover:text-indigo-500" %>
+  </div>
+
+  <div class="mt-6 divide-y divide-gray-200 rounded-xl border border-gray-200">
+    <% @resources.each do |resource| %>
+      <div class="flex items-center justify-between px-6 py-4">
+        <div>
+          <p class="text-sm font-medium text-gray-900">
+            <%= resource.name %>
+            <% unless resource.active? %><span class="ml-2 text-xs text-gray-400">(inactive)</span><% end %>
+          </p>
+          <p class="mt-1 text-xs text-gray-500">
+            <% if resource.salary_relevant? %>requires gross salary<% end %>
+            <% if resource.salary_relevant? && resource.percentage_relevant? %> · <% end %>
+            <% if resource.percentage_relevant? %>requires percentage<% end %>
+          </p>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+          <%= link_to "Edit", edit_admin_employment_type_path(resource), class: "text-indigo-600 hover:text-indigo-500" %>
+          <%= button_to "Delete", admin_employment_type_path(resource), method: :delete,
+                class: "text-red-600 hover:text-red-500", form: { data: { turbo_confirm: "Delete #{resource.name}?" } } %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @resources.empty? %>
+      <p class="px-6 py-8 text-center text-sm text-gray-500">No employment types yet.</p>
+    <% end %>
+  </div>
+</div>

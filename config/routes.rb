@@ -19,14 +19,25 @@ Rails.application.routes.draw do
     resources :candidates, only: [ :index, :create ]
     resources :candidate_profiles, only: [ :show, :edit, :update ] do
       resource :cv, only: [ :show ], controller: "candidate_documents"
+      member { get :complete }
     end
   end
 
   # Admin namespace: staff-only, HTTP Basic Auth via Admin::BaseController (ADMIN_USERNAME/ADMIN_PASSWORD).
   namespace :admin do
+    root to: redirect("/admin/candidates")
+
     resources :candidates, only: [ :index, :show ] do
       resource :cv, only: [ :show ], controller: "candidate_documents"
     end
+
+    # Admin-manageable onboarding option lists (see Onboarding::JobFunction/Region/EmploymentType/
+    # Skill/Language) — replaces what used to be hardcoded Ruby constants/enums.
+    resources :job_functions, except: [ :show ]
+    resources :regions, except: [ :show ]
+    resources :employment_types, except: [ :show ]
+    resources :skills, except: [ :show ]
+    resources :languages, except: [ :show ]
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

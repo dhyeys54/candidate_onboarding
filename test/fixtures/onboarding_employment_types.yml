@@ -1,0 +1,22 @@
+_fixture:
+  model_class: Onboarding::EmploymentType
+
+employed:
+  name: Employed
+  active: true
+  salary_relevant: true
+
+self_employed:
+  name: Self Employed
+  active: true
+  percentage_relevant: true
+
+freelance:
+  name: Freelance
+  active: true
+  percentage_relevant: true
+
+percentage_based:
+  name: Percentage Based
+  active: true
+  percentage_relevant: true

@@ -5,6 +5,4 @@ draft_profile:
   user: candidate_one
   onboarding_status: draft
   job_function: general_dentist
-  regions: ["north"]
-  employment_types: ["employed"]
   working_days: ["monday"]

@@ -7,10 +7,10 @@ module Onboarding
 
       fields :desired_gross_salary, :desired_percentage, :average_daily_revenue,
              :big_registration_status, :big_number, :years_of_experience,
-             employment_types: []
+             employment_type_ids: []
 
       def self.validate(candidate_profile)
-        if candidate_profile.employment_types.blank?
+        unless candidate_profile.any_employment_types_selected?
           candidate_profile.errors.add(:employment_types, "must have at least one selected")
         end
 
@@ -20,7 +20,9 @@ module Onboarding
           validate_numeric(candidate_profile, :years_of_experience, min: 0)
         end
 
-        if (candidate_profile.employment_types & Onboarding::CandidateProfile::SALARY_RELEVANT_EMPLOYMENT_TYPES).any?
+        selected_employment_types = candidate_profile.selected_employment_types
+
+        if selected_employment_types.any?(&:salary_relevant?)
           if candidate_profile.desired_gross_salary.blank?
             candidate_profile.errors.add(:desired_gross_salary, :blank)
           else
@@ -28,7 +30,7 @@ module Onboarding
           end
         end
 
-        if (candidate_profile.employment_types & Onboarding::CandidateProfile::PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES).any?
+        if selected_employment_types.any?(&:percentage_relevant?)
           if candidate_profile.desired_percentage.blank?
             candidate_profile.errors.add(:desired_percentage, :blank)
           else
@@ -36,15 +38,17 @@ module Onboarding
           end
         end
 
-        if candidate_profile.job_function.present? &&
-           Onboarding::CandidateProfile::REVENUE_RELEVANT_JOB_FUNCTIONS.include?(candidate_profile.job_function) &&
-           candidate_profile.average_daily_revenue.blank?
-          candidate_profile.errors.add(:average_daily_revenue, :blank)
+        job_function = candidate_profile.job_function
+
+        if job_function&.revenue_relevant?
+          if candidate_profile.average_daily_revenue.blank?
+            candidate_profile.errors.add(:average_daily_revenue, :blank)
+          else
+            validate_numeric(candidate_profile, :average_daily_revenue, min: 0)
+          end
         end
 
-        if candidate_profile.job_function.present? &&
-           Onboarding::CandidateProfile::BIG_RELEVANT_JOB_FUNCTIONS.include?(candidate_profile.job_function) &&
-           candidate_profile.big_registration_status.blank?
+        if job_function&.big_relevant? && candidate_profile.big_registration_status.blank?
           candidate_profile.errors.add(:big_registration_status, :blank)
         end
 

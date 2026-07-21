@@ -17,7 +17,7 @@ module Admin
     private
 
     def set_candidate_profile
-      @candidate_profile = Onboarding::CandidateProfile.where(onboarding_status: :submitted).find(params[:candidate_id])
+      @candidate_profile = Onboarding::CandidateProfile.submitted.find(params[:candidate_id])
     end
 
     def set_candidate_document

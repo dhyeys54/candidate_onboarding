@@ -1,0 +1,7 @@
+<% content_for :title, "New employment type" %>
+
+<div class="w-full max-w-xl mx-auto">
+  <%= render "admin/shared/nav" %>
+  <h1 class="text-3xl font-semibold text-gray-900">New employment type</h1>
+  <%= render "form", resource: @resource, url: admin_employment_types_path %>
+</div>

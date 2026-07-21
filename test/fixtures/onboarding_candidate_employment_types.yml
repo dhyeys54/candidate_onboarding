@@ -1,0 +1,6 @@
+_fixture:
+  model_class: Onboarding::CandidateEmploymentType
+
+draft_profile_employed:
+  candidate_profile: draft_profile
+  employment_type: employed

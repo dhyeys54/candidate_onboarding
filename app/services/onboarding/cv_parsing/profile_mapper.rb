@@ -7,8 +7,9 @@ module Onboarding
     class ProfileMapper
       USER_FIELDS = %i[first_name last_name email].freeze
       PROFILE_FIELDS = %i[
-        phone city country job_function big_number big_registration_status years_of_experience suggested_summary
+        phone city country big_number big_registration_status years_of_experience suggested_summary
       ].freeze
+      JOB_FUNCTION_FIELD = :job_function
       EDUCATION_ENTRIES_FIELD = :education_entries
       WORK_EXPERIENCE_ENTRIES_FIELD = :work_experience_entries
       SKILL_NAMES_FIELD = :skill_names
@@ -26,6 +27,7 @@ module Onboarding
         ActiveRecord::Base.transaction do
           log_extractions
           identity_applied = apply_user_fields
+          apply_job_function
           apply_profile_fields
           apply_skill_entries
           apply_language_entries
@@ -73,6 +75,22 @@ module Onboarding
         end
       end
 
+      # job_function is handled separately from the generic PROFILE_FIELDS loop because the extracted
+      # value is a stable Onboarding::JobFunction#key string (from the CvExtractionAlias dictionary —
+      # see FieldExtractor), not something that can be mass-assigned directly to the job_function_id
+      # column/belongs_to association.
+      def apply_job_function
+        extracted = extracted_fields[JOB_FUNCTION_FIELD]
+        return if extracted.nil? || candidate_profile.job_function_id.present?
+
+        job_function = Onboarding::JobFunction.find_by(key: extracted.value)
+        return unless job_function
+
+        candidate_profile.job_function = job_function
+        candidate_profile.extracted_fields = candidate_profile.extracted_fields.merge("job_function_id" => extracted.confidence.to_s)
+        candidate_profile.save!
+      end
+
       def apply_profile_fields
         applied_confidences = {}
 
@@ -103,7 +121,7 @@ module Onboarding
         names = Array(extracted.value).reject(&:blank?).uniq { |name| name.downcase }
         return if names.empty?
 
-        known_skills = candidate_profile.job_function.present? ? Onboarding::Skill.where(job_function: candidate_profile.job_function) : Onboarding::Skill.none
+        known_skills = candidate_profile.job_function_id.present? ? Onboarding::Skill.where(job_function_id: candidate_profile.job_function_id) : Onboarding::Skill.none
         skills_by_name = known_skills.index_by { |skill| skill.name.downcase }
 
         names.each do |name|

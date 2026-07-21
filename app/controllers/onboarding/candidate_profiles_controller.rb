@@ -4,7 +4,7 @@ module Onboarding
 
     before_action :set_candidate_profile
     before_action :authorize_candidate!
-    before_action :set_form
+    before_action :set_form, only: [ :edit, :update ]
 
     def show
       @candidate_document = @candidate_profile.candidate_documents.order(created_at: :desc).first
@@ -17,11 +17,19 @@ module Onboarding
       @candidate_profile.assign_attributes(step_attributes)
 
       if @candidate_profile.save(context: going_back? ? nil : @form.page.key)
-        Onboarding::CompleteCandidateProfileService.new(@candidate_profile).call if @form.last_page? && !going_back?
-        redirect_to edit_onboarding_candidate_profile_path(@candidate_profile, page: target_page_key)
+        if @form.last_page? && !going_back?
+          Onboarding::CompleteCandidateProfileService.new(@candidate_profile).call
+          redirect_to complete_onboarding_candidate_profile_path(@candidate_profile)
+        else
+          redirect_to edit_onboarding_candidate_profile_path(@candidate_profile, page: target_page_key)
+        end
       else
         render :edit, status: :unprocessable_entity
       end
+    end
+
+    def complete
+      redirect_to edit_onboarding_candidate_profile_path(@candidate_profile) unless @candidate_profile.submitted?
     end
 
     private
