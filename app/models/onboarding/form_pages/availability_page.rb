@@ -8,7 +8,13 @@ module Onboarding
       fields :available_from, :notice_period, working_days: []
 
       def self.validate(candidate_profile)
-        candidate_profile.errors.add(:available_from, :blank) if candidate_profile.available_from.blank?
+        if candidate_profile.available_from.blank?
+          if candidate_profile.available_from_before_type_cast.present?
+            candidate_profile.errors.add(:available_from, "is not a valid date")
+          else
+            candidate_profile.errors.add(:available_from, :blank)
+          end
+        end
 
         if candidate_profile.working_days.blank?
           candidate_profile.errors.add(:working_days, "must have at least one selected")

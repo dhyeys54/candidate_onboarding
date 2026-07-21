@@ -16,18 +16,24 @@ module Onboarding
 
         if candidate_profile.years_of_experience.blank?
           candidate_profile.errors.add(:years_of_experience, :blank)
-        elsif candidate_profile.years_of_experience.negative?
-          candidate_profile.errors.add(:years_of_experience, "must be greater than or equal to 0")
+        else
+          validate_numeric(candidate_profile, :years_of_experience, min: 0)
         end
 
-        if (candidate_profile.employment_types & Onboarding::CandidateProfile::SALARY_RELEVANT_EMPLOYMENT_TYPES).any? &&
-           candidate_profile.desired_gross_salary.blank?
-          candidate_profile.errors.add(:desired_gross_salary, :blank)
+        if (candidate_profile.employment_types & Onboarding::CandidateProfile::SALARY_RELEVANT_EMPLOYMENT_TYPES).any?
+          if candidate_profile.desired_gross_salary.blank?
+            candidate_profile.errors.add(:desired_gross_salary, :blank)
+          else
+            validate_numeric(candidate_profile, :desired_gross_salary, min: 0)
+          end
         end
 
-        if (candidate_profile.employment_types & Onboarding::CandidateProfile::PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES).any? &&
-           candidate_profile.desired_percentage.blank?
-          candidate_profile.errors.add(:desired_percentage, :blank)
+        if (candidate_profile.employment_types & Onboarding::CandidateProfile::PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES).any?
+          if candidate_profile.desired_percentage.blank?
+            candidate_profile.errors.add(:desired_percentage, :blank)
+          else
+            validate_numeric(candidate_profile, :desired_percentage, min: 0, max: 100)
+          end
         end
 
         if candidate_profile.job_function.present? &&

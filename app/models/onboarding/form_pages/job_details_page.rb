@@ -2,7 +2,7 @@ module Onboarding
   module FormPages
     class JobDetailsPage < Onboarding::FormPage
       self.key = :job_details
-      self.title = "Job details"
+      self.title = "Job preferences"
       self.partial = "onboarding/candidate_profiles/form_pages/job_details"
 
       fields :job_function, :search_status, :reason_for_looking, :max_travel_time_minutes,
@@ -14,8 +14,8 @@ module Onboarding
 
         if candidate_profile.max_travel_time_minutes.blank?
           candidate_profile.errors.add(:max_travel_time_minutes, :blank)
-        elsif candidate_profile.max_travel_time_minutes.negative?
-          candidate_profile.errors.add(:max_travel_time_minutes, "must be greater than or equal to 0")
+        else
+          validate_numeric(candidate_profile, :max_travel_time_minutes, min: 0)
         end
 
         candidate_profile.errors.add(:search_status, :blank) if candidate_profile.search_status.blank?

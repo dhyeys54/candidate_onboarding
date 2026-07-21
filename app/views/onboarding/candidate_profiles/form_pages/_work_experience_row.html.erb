@@ -1,4 +1,4 @@
-<div class="mb-4 rounded-lg border border-gray-200 p-4" data-nested-fields-target="row">
+<div class="mb-4 rounded-lg border border-gray-200 p-4" data-controller="work-experience-row" data-nested-fields-target="row">
   <%= f.hidden_field :id %>
   <%= f.hidden_field :_destroy %>
 
@@ -20,13 +20,14 @@
       <%= f.date_field :start_date, class: form_input_class %>
     </div>
 
-    <div>
+    <div data-work-experience-row-target="endDateSection">
       <%= f.label :end_date, class: form_label_class %>
       <%= f.date_field :end_date, class: form_input_class %>
     </div>
 
     <div class="flex items-center gap-2 sm:col-span-2">
-      <%= f.check_box :current_job, class: "rounded border-gray-300" %>
+      <%= f.check_box :current_job, class: "rounded border-gray-300",
+            data: { action: "change->work-experience-row#toggleEndDate", "work-experience-row-target": "currentJobCheckbox" } %>
       <%= f.label :current_job, "I currently work here", class: "text-sm text-gray-700" %>
     </div>
 
