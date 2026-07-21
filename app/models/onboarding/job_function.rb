@@ -5,17 +5,14 @@ module Onboarding
   # Compensation page's conditional BIG-registration/average-daily-revenue fields — see
   # Onboarding::FormPages::CompensationPage.
   class JobFunction < ApplicationRecord
+    include Onboarding::Optionable
+
     has_many :skills, class_name: "Onboarding::Skill", dependent: :restrict_with_error
     has_many :candidate_profiles, class_name: "Onboarding::CandidateProfile", dependent: :restrict_with_error
 
     validates :key, presence: true, uniqueness: true
     validates :name, presence: true
 
-    scope :active, -> { where(active: true) }
     scope :ordered, -> { order(:position, :name) }
-
-    def to_s
-      name
-    end
   end
 end

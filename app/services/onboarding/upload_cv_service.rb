@@ -10,15 +10,8 @@ module Onboarding
         return [ "Please choose a CV file to upload." ]
       end
 
-      config = Rails.application.config.x.cv_upload
-      errors = []
-      unless config.allowed_content_types.include?(uploaded_file.content_type)
-        errors << "CV must be a PDF or Word document (.pdf, .doc, .docx)."
-      end
-      if uploaded_file.size > config.max_size
-        errors << "CV is too large (maximum is #{config.max_size / 1.megabyte}MB)."
-      end
-      errors
+      CvFileValidator.errors_for(content_type: uploaded_file.content_type, byte_size: uploaded_file.size)
+        .map { |message| "CV #{message}." }
     end
 
     def initialize(candidate_profile:, uploaded_file:)

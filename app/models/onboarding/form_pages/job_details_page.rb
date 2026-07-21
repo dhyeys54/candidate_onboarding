@@ -12,11 +12,7 @@ module Onboarding
         candidate_profile.errors.add(:job_function_id, :blank) if candidate_profile.job_function_id.blank?
         candidate_profile.errors.add(:regions, "must have at least one selected") unless candidate_profile.any_regions_selected?
 
-        if candidate_profile.max_travel_time_minutes.blank?
-          candidate_profile.errors.add(:max_travel_time_minutes, :blank)
-        else
-          validate_numeric(candidate_profile, :max_travel_time_minutes, min: 0)
-        end
+        validate_numeric(candidate_profile, :max_travel_time_minutes, min: 0, required: true)
 
         candidate_profile.errors.add(:search_status, :blank) if candidate_profile.search_status.blank?
       end

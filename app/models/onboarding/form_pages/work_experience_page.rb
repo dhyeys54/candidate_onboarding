@@ -10,9 +10,7 @@ module Onboarding
       ]
 
       def self.validate(candidate_profile)
-        if candidate_profile.work_experiences.reject(&:marked_for_destruction?).empty?
-          candidate_profile.errors.add(:work_experiences, "must have at least one entry")
-        end
+        validate_at_least_one(candidate_profile, :work_experiences)
       end
     end
   end

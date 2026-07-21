@@ -30,11 +30,16 @@ module Onboarding
 
       # Numeric-column attributes silently type-cast non-numeric input (e.g. "abc") to 0 rather than
       # nil, so a plain `.blank?`/presence check never sees garbage input — it looks like a valid 0.
-      # Checking the raw *_before_type_cast string catches that. No-ops when nothing was submitted
-      # (presence, where required, is each page's own concern).
-      def validate_numeric(candidate_profile, attribute, min: nil, max: nil)
+      # Checking the raw *_before_type_cast string catches that. `required:` folds in the "blank is an
+      # error" case pages otherwise had to write themselves before calling this; leave it false (the
+      # default) for optional numeric fields, where nothing submitted is simply a no-op.
+      def validate_numeric(candidate_profile, attribute, min: nil, max: nil, required: false)
         raw = candidate_profile.public_send(:"#{attribute}_before_type_cast")
-        return if raw.blank?
+
+        if raw.blank?
+          candidate_profile.errors.add(attribute, :blank) if required
+          return
+        end
 
         if raw.is_a?(String) && raw !~ /\A-?\d+(\.\d+)?\z/
           candidate_profile.errors.add(attribute, "is not a number")
@@ -46,6 +51,16 @@ module Onboarding
 
         candidate_profile.errors.add(attribute, "must be greater than or equal to #{min}") if min && value < min
         candidate_profile.errors.add(attribute, "must be less than or equal to #{max}") if max && value > max
+      end
+
+      # Adds a "must have at least one entry" error when every row of a has-many association is either
+      # unpersisted-and-empty or marked for destruction. Shared by pages whose association requires at
+      # least one row (educations, work_experiences, candidate_skills) — mirrors validate_numeric's
+      # role as a reusable per-page validation building block.
+      def validate_at_least_one(candidate_profile, association)
+        return if candidate_profile.public_send(association).reject(&:marked_for_destruction?).any?
+
+        candidate_profile.errors.add(association, "must have at least one entry")
       end
     end
   end

@@ -8,9 +8,7 @@ module Onboarding
       fields educations_attributes: [ :id, :study, :institution, :level, :location, :start_date, :end_date, :_destroy ]
 
       def self.validate(candidate_profile)
-        if candidate_profile.educations.reject(&:marked_for_destruction?).empty?
-          candidate_profile.errors.add(:educations, "must have at least one entry")
-        end
+        validate_at_least_one(candidate_profile, :educations)
       end
     end
   end

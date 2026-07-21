@@ -21,7 +21,7 @@ module Admin
     end
 
     def set_candidate_document
-      @candidate_document = @candidate_profile.candidate_documents.order(created_at: :desc).first
+      @candidate_document = @candidate_profile.latest_candidate_document
     end
   end
 end

@@ -202,17 +202,24 @@ module Onboarding
         line == line.upcase || line.end_with?(":") || OTHER_SECTION_HEADINGS.include?(line.downcase.delete(":").strip)
       end
 
+      # Shared by extract_education_entries/extract_work_experience_entries/extract_skills/
+      # extract_language_names: locates the named section by its heading, then takes body lines up to
+      # the next heading (or `limit`, whichever comes first). nil if the heading isn't present at all.
+      def section_body(headings, limit:)
+        heading_index = lines.index { |line| headings.include?(line.downcase.delete(":").strip) }
+        return unless heading_index
+
+        lines[(heading_index + 1)..].to_a.take_while { |line| !heading_like?(line) }.first(limit).presence
+      end
+
       # Best-effort: locates an "Education"/"Opleiding" section, groups its lines into one entry per
       # date range found (or the whole section as a single entry if no dates appear at all), then
       # pulls institution/study/level/dates out of each group. CV layouts vary too much to parse
       # reliably, so every entry is stamped :low confidence and entries with no discernible study
       # text are dropped rather than saved blank.
       def extract_education_entries
-        heading_index = lines.index { |line| EDUCATION_HEADINGS.include?(line.downcase.delete(":").strip) }
-        return unless heading_index
-
-        body = lines[(heading_index + 1)..].to_a.take_while { |line| !heading_like?(line) }.first(40)
-        return if body.empty?
+        body = section_body(EDUCATION_HEADINGS, limit: 40)
+        return unless body
 
         entries = group_lines_by_date_range(body).filter_map { |group| parse_education_entry(group) }
         return if entries.empty?
@@ -226,11 +233,8 @@ module Onboarding
       # in the section becomes its own entry, not just the first. Entries without a discernible company
       # name are dropped rather than saved blank.
       def extract_work_experience_entries
-        heading_index = lines.index { |line| WORK_EXPERIENCE_HEADINGS.include?(line.downcase.delete(":").strip) }
-        return unless heading_index
-
-        body = lines[(heading_index + 1)..].to_a.take_while { |line| !heading_like?(line) }.first(60)
-        return if body.empty?
+        body = section_body(WORK_EXPERIENCE_HEADINGS, limit: 60)
+        return unless body
 
         entries = group_lines_by_date_range(body).filter_map { |group| parse_work_experience_entry(group) }
         return if entries.empty?
@@ -244,11 +248,8 @@ module Onboarding
       # needed here unlike education/work experience. Always :low confidence — ProfileMapper matches
       # each name against the platform Skill list itself rather than trusting this as a clean value.
       def extract_skills
-        heading_index = lines.index { |line| SKILLS_HEADINGS.include?(line.downcase.delete(":").strip) }
-        return unless heading_index
-
-        body = lines[(heading_index + 1)..].to_a.take_while { |line| !heading_like?(line) }.first(20)
-        return if body.empty?
+        body = section_body(SKILLS_HEADINGS, limit: 20)
+        return unless body
 
         names = body.flat_map { |line| line.split(SKILL_SEPARATOR_REGEX) }
                     .map { |name| clean_text_fragment(name) }
@@ -265,11 +266,8 @@ module Onboarding
       # which keeps raw text for ProfileMapper to match, languages are a closed small set so
       # canonicalizing here up front sidesteps NL/EN spelling differences entirely.
       def extract_language_names
-        heading_index = lines.index { |line| LANGUAGES_HEADINGS.include?(line.downcase.delete(":").strip) }
-        return unless heading_index
-
-        body = lines[(heading_index + 1)..].to_a.take_while { |line| !heading_like?(line) }.first(20)
-        return if body.empty?
+        body = section_body(LANGUAGES_HEADINGS, limit: 20)
+        return unless body
 
         section_text = body.join(" ")
         names = Onboarding::CvExtractionAlias.for_field("language").filter_map do |a|

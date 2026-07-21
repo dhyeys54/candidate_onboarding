@@ -7,7 +7,7 @@ module Onboarding
     before_action :set_form, only: [ :edit, :update ]
 
     def show
-      @candidate_document = @candidate_profile.candidate_documents.order(created_at: :desc).first
+      @candidate_document = @candidate_profile.latest_candidate_document
     end
 
     def edit

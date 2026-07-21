@@ -14,38 +14,22 @@ module Onboarding
           candidate_profile.errors.add(:employment_types, "must have at least one selected")
         end
 
-        if candidate_profile.years_of_experience.blank?
-          candidate_profile.errors.add(:years_of_experience, :blank)
-        else
-          validate_numeric(candidate_profile, :years_of_experience, min: 0)
-        end
+        validate_numeric(candidate_profile, :years_of_experience, min: 0, required: true)
 
         selected_employment_types = candidate_profile.selected_employment_types
 
         if selected_employment_types.any?(&:salary_relevant?)
-          if candidate_profile.desired_gross_salary.blank?
-            candidate_profile.errors.add(:desired_gross_salary, :blank)
-          else
-            validate_numeric(candidate_profile, :desired_gross_salary, min: 0)
-          end
+          validate_numeric(candidate_profile, :desired_gross_salary, min: 0, required: true)
         end
 
         if selected_employment_types.any?(&:percentage_relevant?)
-          if candidate_profile.desired_percentage.blank?
-            candidate_profile.errors.add(:desired_percentage, :blank)
-          else
-            validate_numeric(candidate_profile, :desired_percentage, min: 0, max: 100)
-          end
+          validate_numeric(candidate_profile, :desired_percentage, min: 0, max: 100, required: true)
         end
 
         job_function = candidate_profile.job_function
 
         if job_function&.revenue_relevant?
-          if candidate_profile.average_daily_revenue.blank?
-            candidate_profile.errors.add(:average_daily_revenue, :blank)
-          else
-            validate_numeric(candidate_profile, :average_daily_revenue, min: 0)
-          end
+          validate_numeric(candidate_profile, :average_daily_revenue, min: 0, required: true)
         end
 
         if job_function&.big_relevant? && candidate_profile.big_registration_status.blank?

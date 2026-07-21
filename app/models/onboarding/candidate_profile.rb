@@ -81,6 +81,10 @@ module Onboarding
       Onboarding::EmploymentType.where(id: selected_employment_type_ids)
     end
 
+    def latest_candidate_document
+      candidate_documents.order(created_at: :desc).first
+    end
+
     # Rails' has_many :through auto-generates region_ids=, but it writes to the join table
     # immediately on assignment rather than deferring to #save like accepts_nested_attributes_for
     # does — that would let a region pick persist even when the rest of the page fails validation.
