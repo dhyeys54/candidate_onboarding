@@ -216,6 +216,24 @@ class Onboarding::CvParsing::FieldExtractorTest < ActiveSupport::TestCase
     assert entry[:current_job]
   end
 
+  test "extracts the month, not just the year, from a month-named date range" do
+    text = "Experience\nDeqode, Indore\nSolution Engineer\nOct 2024 - Jul 2026\nShipped features\n\nOpleiding\nSome study\n"
+    result = extract(text)
+
+    entry = result[:work_experience_entries].value.first
+    assert_equal Date.new(2024, 10, 1), entry[:start_date]
+    assert_equal Date.new(2026, 7, 1), entry[:end_date]
+  end
+
+  test "extracts the month from a Dutch month abbreviation in a date range" do
+    text = "Werkervaring\nmrt 2018 - okt 2020 Tandarts, Praktijk Utrecht\n"
+    result = extract(text)
+
+    entry = result[:work_experience_entries].value.first
+    assert_equal Date.new(2018, 3, 1), entry[:start_date]
+    assert_equal Date.new(2020, 10, 1), entry[:end_date]
+  end
+
   test "does not extract work experience entries when there is no experience section" do
     result = extract("Contact\nEmail: jane@example.com\n")
 

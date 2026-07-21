@@ -45,7 +45,16 @@ module Onboarding
       /ix
       # Optional leading month name/abbreviation on either side handles "Oct 2024 – Jul 2026"-style
       # ranges, not just bare "2019 - 2022" years — common in non-dentist (e.g. software) CV formats.
-      DATE_RANGE_REGEX = /(?:[A-Za-z]+\.?\s+)?(\d{4})\s*(?:[-–—]|tot|to|until)\s*(?:[A-Za-z]+\.?\s+)?(\d{4}|present|heden|current|nu)/i
+      # The month names are captured (groups 1 and 3), not just tolerated, so parse_date_range can use
+      # them instead of always defaulting to January.
+      DATE_RANGE_REGEX = /(?:([A-Za-z]+)\.?\s+)?(\d{4})\s*(?:[-–—]|tot|to|until)\s*(?:([A-Za-z]+)\.?\s+)?(\d{4}|present|heden|current|nu)/i
+      # First 3 letters (downcased) of a matched month name -> month number. Covers English
+      # abbreviations/full names and Dutch ones; "mrt"/"okt" are Dutch-only abbreviations for
+      # March/October that don't share English's first-3-letters ("mar"/"oct").
+      MONTH_NAMES = {
+        "jan" => 1, "feb" => 2, "mar" => 3, "mrt" => 3, "apr" => 4, "may" => 5, "mei" => 5,
+        "jun" => 6, "jul" => 7, "aug" => 8, "sep" => 9, "oct" => 10, "okt" => 10, "nov" => 11, "dec" => 12
+      }.freeze
       EDUCATION_LEVEL_PATTERNS = {
         /\bmbo\b/i => :mbo,
         /\bhbo\b/i => :hbo,
@@ -349,7 +358,7 @@ module Onboarding
 
         date_match = date_line_index && group[date_line_index].match(DATE_RANGE_REGEX)
         start_date, end_date = parse_date_range(date_match)
-        current_job = date_match ? date_match[2].match?(/present|heden|current|nu/i) : false
+        current_job = date_match ? date_match[4].match?(/present|heden|current|nu/i) : false
 
         responsibilities = group[responsibilities_from..].to_a.map { |line| clean_text_fragment(line) }.reject(&:blank?).join(" ")
 
@@ -375,11 +384,15 @@ module Onboarding
       def parse_date_range(match)
         return [ nil, nil ] unless match
 
-        start_date = Date.new(match[1].to_i, 1, 1)
-        end_date = Date.new(match[2].to_i, 1, 1) if match[2].match?(/\A\d{4}\z/)
+        start_date = Date.new(match[2].to_i, month_number(match[1]), 1)
+        end_date = Date.new(match[4].to_i, month_number(match[3]), 1) if match[4].match?(/\A\d{4}\z/)
         [ start_date, end_date ]
       rescue ArgumentError
         [ nil, nil ]
+      end
+
+      def month_number(month_name)
+        MONTH_NAMES[month_name.to_s.downcase.first(3)] || 1
       end
     end
   end
