@@ -5,12 +5,14 @@
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <div>
       <%= f.label :job_title, class: form_label_class %>
-      <%= f.text_field :job_title, class: form_input_class %>
+      <%= f.text_field :job_title, class: form_input_class(f.object, :job_title) %>
+      <%= field_errors(f.object, :job_title) %>
     </div>
 
     <div>
       <%= f.label :company_name, class: form_label_class %>
-      <%= f.text_field :company_name, class: form_input_class %>
+      <%= f.text_field :company_name, class: form_input_class(f.object, :company_name) %>
+      <%= field_errors(f.object, :company_name) %>
     </div>
 
     <div>

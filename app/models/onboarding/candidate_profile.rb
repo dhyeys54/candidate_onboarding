@@ -11,8 +11,6 @@ module Onboarding
 
     BIG_RELEVANT_JOB_FUNCTIONS = %w[general_dentist dental_hygienist specialist].freeze
     REVENUE_RELEVANT_JOB_FUNCTIONS = %w[general_dentist dental_hygienist specialist prevention_assistant].freeze
-    SALARY_RELEVANT_EMPLOYMENT_TYPES = %w[employed].freeze
-    PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES = %w[self_employed freelance].freeze
 
     enum :job_function, Onboarding::JobFunctions::VALUES
     enum :search_status, { active: 0, passive: 1, inactive: 2 }
@@ -29,36 +27,50 @@ module Onboarding
     has_many :languages, through: :candidate_languages, class_name: "Onboarding::Language"
     has_many :candidate_documents, class_name: "Onboarding::CandidateDocument", dependent: :destroy
 
+    # update_only: true — a candidate always has exactly one user; without it, nested attributes
+    # without an "id" (the form never submits one) would build a brand new blank User instead of
+    # updating the existing one.
+    accepts_nested_attributes_for :user, update_only: true
     accepts_nested_attributes_for :educations, allow_destroy: true, reject_if: :all_blank
     accepts_nested_attributes_for :work_experiences, allow_destroy: true, reject_if: :all_blank
     accepts_nested_attributes_for :candidate_skills, allow_destroy: true, reject_if: :all_blank
     accepts_nested_attributes_for :candidate_languages, allow_destroy: true, reject_if: :all_blank
+
+    # Each of these array fields is rendered as a checkbox group with a permanently-present hidden
+    # fallback field (so unchecking every box still submits the key) — real submissions always
+    # include a blank string alongside any checked values. Strip those before validating/saving so
+    # they don't get flagged as an invalid value and don't count toward "at least one selected".
+    before_validation :strip_blank_array_values
 
     validate :regions_are_valid
     validate :employment_types_are_valid
     validate :transport_types_are_valid
     validate :working_days_are_valid
 
-    with_options on: :submission do
-      validates :phone, :city, :country, presence: true
-      validates :job_function, presence: true
-      validates :max_travel_time_minutes, presence: true, numericality: { greater_than_or_equal_to: 0 }
-      validates :search_status, presence: true
-      validates :years_of_experience, presence: true, numericality: { greater_than_or_equal_to: 0 }
-      validates :available_from, presence: true
+    # Runs the current Onboarding::Form page's own validation hook (see Onboarding::FormPage) when
+    # validating/saving under that page's context — e.g. `.save(context: :personal_details)`. A
+    # no-op for any other context (nil, ...), since page_for only resolves real page keys.
+    validate :run_current_page_validation
 
-      validate :at_least_one_region
-      validate :at_least_one_employment_type
-      validate :at_least_one_working_day
-      validate :at_least_one_language
-      validate :desired_gross_salary_required_if_salary_relevant
-      validate :desired_percentage_required_if_percentage_relevant
-      validate :average_daily_revenue_required_if_revenue_relevant
-      validate :big_registration_status_required_if_big_relevant
-      validate :big_number_required_if_big_registered
+    # Uses the has_many (not the has_many :through) so newly built, not-yet-persisted
+    # candidate_languages (e.g. from this request's nested attributes) count before the record is
+    # saved — `languages.empty?` would query the DB and miss them, wrongly rejecting a fresh pick.
+    def any_languages_selected?
+      candidate_languages.reject(&:marked_for_destruction?).any?
     end
 
     private
+
+    def run_current_page_validation
+      Onboarding::Form.page_for(validation_context)&.validate(self)
+    end
+
+    def strip_blank_array_values
+      self.regions = regions.reject(&:blank?)
+      self.employment_types = employment_types.reject(&:blank?)
+      self.transport_types = transport_types.reject(&:blank?)
+      self.working_days = working_days.reject(&:blank?)
+    end
 
     def regions_are_valid
       invalid = Array(regions) - REGIONS
@@ -78,52 +90,6 @@ module Onboarding
     def working_days_are_valid
       invalid = Array(working_days) - WORKING_DAYS
       errors.add(:working_days, "contains invalid values: #{invalid.join(', ')}") if invalid.any?
-    end
-
-    def at_least_one_region
-      errors.add(:regions, "must have at least one selected") if regions.blank?
-    end
-
-    def at_least_one_employment_type
-      errors.add(:employment_types, "must have at least one selected") if employment_types.blank?
-    end
-
-    def at_least_one_working_day
-      errors.add(:working_days, "must have at least one selected") if working_days.blank?
-    end
-
-    def at_least_one_language
-      errors.add(:languages, "must have at least one selected") if languages.empty?
-    end
-
-    def desired_gross_salary_required_if_salary_relevant
-      return unless (employment_types & SALARY_RELEVANT_EMPLOYMENT_TYPES).any?
-
-      errors.add(:desired_gross_salary, "can't be blank") if desired_gross_salary.blank?
-    end
-
-    def desired_percentage_required_if_percentage_relevant
-      return unless (employment_types & PERCENTAGE_RELEVANT_EMPLOYMENT_TYPES).any?
-
-      errors.add(:desired_percentage, "can't be blank") if desired_percentage.blank?
-    end
-
-    def average_daily_revenue_required_if_revenue_relevant
-      return unless job_function.present? && REVENUE_RELEVANT_JOB_FUNCTIONS.include?(job_function)
-
-      errors.add(:average_daily_revenue, "can't be blank") if average_daily_revenue.blank?
-    end
-
-    def big_registration_status_required_if_big_relevant
-      return unless job_function.present? && BIG_RELEVANT_JOB_FUNCTIONS.include?(job_function)
-
-      errors.add(:big_registration_status, "can't be blank") if big_registration_status.blank?
-    end
-
-    def big_number_required_if_big_registered
-      return unless big_registration_status == "big_registered"
-
-      errors.add(:big_number, "can't be blank") if big_number.blank?
     end
   end
 end

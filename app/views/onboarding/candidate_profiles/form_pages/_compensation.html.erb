@@ -1,16 +1,63 @@
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-  <div>
-    <%= form.label :desired_gross_salary, "Desired gross salary", class: form_label_class %>
-    <%= form.number_field :desired_gross_salary, min: 0, class: form_input_class %>
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2" data-controller="compensation-fields">
+  <div class="sm:col-span-2">
+    <span class="<%= form_label_class %>">Desired employment type<span class="text-red-500"> *</span></span>
+    <div class="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <% Onboarding::CandidateProfile::EMPLOYMENT_TYPES.each do |employment_type| %>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= check_box_tag "candidate_profile[employment_types][]", employment_type, candidate_profile.employment_types.include?(employment_type),
+                id: "candidate_profile_employment_types_#{employment_type}", class: "rounded border-gray-300",
+                data: { action: "change->compensation-fields#toggleEmploymentSections", "compensation-fields-target": "employmentCheckbox" } %>
+          <%= employment_type.humanize %>
+        </label>
+      <% end %>
+      <%= hidden_field_tag "candidate_profile[employment_types][]", "" %>
+    </div>
+    <%= field_errors(candidate_profile, :employment_types) %>
   </div>
 
   <div>
-    <%= form.label :desired_percentage, "Desired percentage", class: form_label_class %>
-    <%= form.number_field :desired_percentage, min: 0, max: 100, step: 0.01, class: form_input_class %>
+    <%= field_label(form, :years_of_experience, text: "Years of combined dental experience", candidate_profile: candidate_profile, required: true) %>
+    <%= form.number_field :years_of_experience, min: 0, class: form_input_class(candidate_profile, :years_of_experience) %>
+    <%= field_errors(candidate_profile, :years_of_experience) %>
   </div>
 
-  <div>
-    <%= form.label :average_daily_revenue, class: form_label_class %>
-    <%= form.number_field :average_daily_revenue, min: 0, class: form_input_class %>
+  <div class="<%= "hidden" unless candidate_profile.employment_types.include?("employed") %>"
+       data-compensation-fields-target="salarySection">
+    <%= field_label(form, :desired_gross_salary, text: "Desired gross salary", candidate_profile: candidate_profile, required: true) %>
+    <%= form.number_field :desired_gross_salary, min: 0, class: form_input_class(candidate_profile, :desired_gross_salary) %>
+    <%= field_errors(candidate_profile, :desired_gross_salary) %>
   </div>
+
+  <div class="<%= "hidden" unless (candidate_profile.employment_types & %w[self_employed freelance]).any? %>"
+       data-compensation-fields-target="percentageSection">
+    <%= field_label(form, :desired_percentage, text: "Desired percentage", candidate_profile: candidate_profile, required: true) %>
+    <%= form.number_field :desired_percentage, min: 0, max: 100, step: 0.01, class: form_input_class(candidate_profile, :desired_percentage) %>
+    <%= field_errors(candidate_profile, :desired_percentage) %>
+  </div>
+
+  <% if Onboarding::CandidateProfile::REVENUE_RELEVANT_JOB_FUNCTIONS.include?(candidate_profile.job_function) %>
+    <div>
+      <%= field_label(form, :average_daily_revenue, candidate_profile: candidate_profile, required: true) %>
+      <%= form.number_field :average_daily_revenue, min: 0, class: form_input_class(candidate_profile, :average_daily_revenue) %>
+      <%= field_errors(candidate_profile, :average_daily_revenue) %>
+    </div>
+  <% end %>
+
+  <% if Onboarding::CandidateProfile::BIG_RELEVANT_JOB_FUNCTIONS.include?(candidate_profile.job_function) %>
+    <div>
+      <%= field_label(form, :big_registration_status, candidate_profile: candidate_profile, required: true) %>
+      <%= form.select :big_registration_status,
+            Onboarding::CandidateProfile.big_registration_statuses.keys.map { |key| [ key.humanize, key ] },
+            { include_blank: true }, class: form_input_class(candidate_profile, :big_registration_status),
+            data: { action: "change->compensation-fields#toggleBigNumberSection", "compensation-fields-target": "bigStatusSelect" } %>
+      <%= field_errors(candidate_profile, :big_registration_status) %>
+    </div>
+
+    <div class="<%= "hidden" unless candidate_profile.big_registration_status == "big_registered" %>"
+         data-compensation-fields-target="bigNumberSection">
+      <%= field_label(form, :big_number, candidate_profile: candidate_profile, required: true) %>
+      <%= form.text_field :big_number, class: form_input_class(candidate_profile, :big_number) %>
+      <%= field_errors(candidate_profile, :big_number) %>
+    </div>
+  <% end %>
 </div>

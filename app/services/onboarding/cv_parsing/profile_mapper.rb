@@ -7,6 +7,9 @@ module Onboarding
     class ProfileMapper
       USER_FIELDS = %i[first_name last_name email].freeze
       PROFILE_FIELDS = %i[phone city country job_function big_number suggested_summary].freeze
+      EDUCATION_ENTRIES_FIELD = :education_entries
+      WORK_EXPERIENCE_ENTRIES_FIELD = :work_experience_entries
+      SKILL_NAMES_FIELD = :skill_names
       GUEST_EMAIL_PATTERN = /\Aguest-[0-9a-f-]{36}@guest\.dentalonboarding\.invalid\z/
 
       def initialize(candidate_document, extracted_fields)
@@ -21,6 +24,9 @@ module Onboarding
           log_extractions
           identity_applied = apply_user_fields
           apply_profile_fields
+          apply_skill_entries
+          apply_education_entries
+          apply_work_experience_entries
           user.update!(role: :candidate) if identity_applied && user.guest?
         end
       end
@@ -77,6 +83,69 @@ module Onboarding
         return if applied_confidences.empty?
 
         candidate_profile.extracted_fields = candidate_profile.extracted_fields.merge(applied_confidences)
+        candidate_profile.save!
+      end
+
+      # Only prefills when the candidate has no skill rows yet (idempotent, mirrors the other apply_*
+      # methods). Runs after apply_profile_fields so candidate_profile.job_function (itself possibly
+      # just extracted) is available to scope matching. Each raw CV skill name is matched
+      # case-insensitively against the platform Skill list for that job_function; a match becomes a
+      # real skill_id reference, anything unmatched becomes a free-text suggested_name row for
+      # recruiter review — CandidateSkill accepts either.
+      def apply_skill_entries
+        extracted = extracted_fields[SKILL_NAMES_FIELD]
+        return if extracted.nil? || candidate_profile.candidate_skills.any?
+
+        names = Array(extracted.value).reject(&:blank?).uniq { |name| name.downcase }
+        return if names.empty?
+
+        known_skills = candidate_profile.job_function.present? ? Onboarding::Skill.where(job_function: candidate_profile.job_function) : Onboarding::Skill.none
+        skills_by_name = known_skills.index_by { |skill| skill.name.downcase }
+
+        names.each do |name|
+          matched_skill = skills_by_name[name.downcase]
+          candidate_profile.candidate_skills.build(matched_skill ? { skill: matched_skill } : { suggested_name: name })
+        end
+
+        candidate_profile.extracted_fields = candidate_profile.extracted_fields.merge(
+          SKILL_NAMES_FIELD.to_s => extracted.confidence.to_s
+        )
+        candidate_profile.save!
+      end
+
+      # Only prefills when the candidate has no education rows yet (idempotent, mirrors
+      # apply_profile_fields' blank-only rule) — a re-parse or a second CV upload never duplicates or
+      # overwrites education the candidate already reviewed/edited. Entries with no discernible study
+      # text are dropped rather than built, since Education requires study to save.
+      def apply_education_entries
+        extracted = extracted_fields[EDUCATION_ENTRIES_FIELD]
+        return if extracted.nil? || candidate_profile.educations.any?
+
+        entries = Array(extracted.value).select { |entry| entry[:study].present? }
+        return if entries.empty?
+
+        entries.each { |entry| candidate_profile.educations.build(entry) }
+        candidate_profile.extracted_fields = candidate_profile.extracted_fields.merge(
+          EDUCATION_ENTRIES_FIELD.to_s => extracted.confidence.to_s
+        )
+        candidate_profile.save!
+      end
+
+      # Only prefills when the candidate has no work experience rows yet (idempotent, mirrors
+      # apply_education_entries). Supports multiple past employers: every extracted entry is built as
+      # its own record rather than collapsing to a single job. Entries with no discernible company name
+      # are dropped rather than built, since WorkExperience requires company_name to save.
+      def apply_work_experience_entries
+        extracted = extracted_fields[WORK_EXPERIENCE_ENTRIES_FIELD]
+        return if extracted.nil? || candidate_profile.work_experiences.any?
+
+        entries = Array(extracted.value).select { |entry| entry[:company_name].present? }
+        return if entries.empty?
+
+        entries.each { |entry| candidate_profile.work_experiences.build(entry) }
+        candidate_profile.extracted_fields = candidate_profile.extracted_fields.merge(
+          WORK_EXPERIENCE_ENTRIES_FIELD.to_s => extracted.confidence.to_s
+        )
         candidate_profile.save!
       end
     end

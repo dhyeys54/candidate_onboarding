@@ -78,3 +78,23 @@ dutch_cities.each do |city|
     alias_record.value = city
   end
 end
+
+# Onboarding::Skill — starter platform skill list, grouped by job_function, shown as a checklist on
+# the candidate's Skills page and consulted by CvParsing::ProfileMapper to match skills found on an
+# uploaded CV. Not exhaustive: job functions not listed here (specialist, prevention_assistant,
+# paro_prevention_assistant, orthodontic_assistant) simply have no seeded skills yet, so candidates in
+# those functions fall back to the free-text "suggested_name" field until a list is added for them.
+skills_by_job_function = {
+  general_dentist: [ "Endodontics", "Restorative dentistry", "Pediatric dentistry", "Surgery", "Aligners" ],
+  dental_hygienist: [ "Periodontology", "Prevention", "Scaling", "Patient education" ],
+  dental_assistant: [ "Chairside assistance", "Sterilization", "Orthodontics", "Prevention" ],
+  front_office_receptionist: [ "Planning", "Phone handling", "Invoicing", "Patient communication" ],
+  practice_manager: [ "Team management", "Scheduling", "HR", "Practice operations" ],
+  dental_technician: [ "Prosthetics", "CAD/CAM", "Crown and bridge work" ]
+}
+
+skills_by_job_function.each do |job_function, names|
+  names.each do |name|
+    Onboarding::Skill.find_or_create_by!(name: name, job_function: job_function)
+  end
+end

@@ -1,35 +1,69 @@
+<% languages = Onboarding::Language.where(active: true).order(:name) %>
+
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-  <%= fields_for :user, candidate_profile.user do |uf| %>
+  <%= form.fields_for :user, candidate_profile.user do |uf| %>
     <div>
-      <%= uf.label :first_name, class: form_label_class %>
-      <%= uf.text_field :first_name, class: form_input_class %>
+      <%= field_label(uf, :first_name, candidate_profile: candidate_profile, required: true) %>
+      <%= uf.text_field :first_name, class: form_input_class(candidate_profile.user, :first_name) %>
+      <%= field_errors(candidate_profile.user, :first_name) %>
     </div>
 
     <div>
-      <%= uf.label :last_name, class: form_label_class %>
-      <%= uf.text_field :last_name, class: form_input_class %>
+      <%= field_label(uf, :last_name, candidate_profile: candidate_profile, required: true) %>
+      <%= uf.text_field :last_name, class: form_input_class(candidate_profile.user, :last_name) %>
+      <%= field_errors(candidate_profile.user, :last_name) %>
     </div>
 
     <div class="sm:col-span-2">
-      <%= uf.label :email, class: form_label_class %>
-      <%= uf.email_field :email, class: form_input_class %>
+      <%= field_label(uf, :email, candidate_profile: candidate_profile, required: true) %>
+      <%= uf.email_field :email, class: form_input_class(candidate_profile.user, :email) %>
+      <%= field_errors(candidate_profile.user, :email) %>
     </div>
   <% end %>
 
   <div>
-    <%= field_label(form, :phone, candidate_profile: candidate_profile) %>
-    <%= form.text_field :phone, class: form_input_class %>
+    <%= field_label(form, :phone, candidate_profile: candidate_profile, required: true) %>
+    <%= form.text_field :phone, class: form_input_class(candidate_profile, :phone),
+          autocomplete: "tel", placeholder: "+31 6 1234 5678" %>
+    <p class="mt-1 text-xs text-gray-500">Include the country code if you're outside the Netherlands.</p>
+    <%= field_errors(candidate_profile, :phone) %>
   </div>
 
   <div></div>
 
   <div>
-    <%= field_label(form, :city, candidate_profile: candidate_profile) %>
-    <%= form.text_field :city, class: form_input_class %>
+    <%= field_label(form, :city, text: "City / place of residence", candidate_profile: candidate_profile, required: true) %>
+    <%= form.text_field :city, class: form_input_class(candidate_profile, :city) %>
+    <%= field_errors(candidate_profile, :city) %>
   </div>
 
   <div>
-    <%= field_label(form, :country, candidate_profile: candidate_profile) %>
-    <%= form.text_field :country, class: form_input_class %>
+    <%= field_label(form, :country, candidate_profile: candidate_profile, required: true) %>
+    <%= form.text_field :country, class: form_input_class(candidate_profile, :country) %>
+    <%= field_errors(candidate_profile, :country) %>
   </div>
+</div>
+
+<div class="mt-8">
+  <span class="<%= form_label_class %>">Languages<span class="text-red-500"> *</span></span>
+  <p class="mt-1 text-xs text-gray-500">Add each language you speak and, if you know it, your level (e.g. B2, fluent, native).</p>
+
+  <div class="mt-2" data-controller="nested-fields">
+    <div data-nested-fields-target="list">
+      <%= form.fields_for :candidate_languages do |lf| %>
+        <%= render "onboarding/candidate_profiles/form_pages/candidate_language_row", f: lf, languages: languages %>
+      <% end %>
+    </div>
+
+    <template data-nested-fields-target="template">
+      <%= form.fields_for :candidate_languages, Onboarding::CandidateLanguage.new, child_index: "NEW_RECORD" do |lf| %>
+        <%= render "onboarding/candidate_profiles/form_pages/candidate_language_row", f: lf, languages: languages %>
+      <% end %>
+    </template>
+
+    <button type="button" data-action="nested-fields#add" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+      + Add language
+    </button>
+  </div>
+  <%= field_errors(candidate_profile, :languages) %>
 </div>

@@ -1,0 +1,26 @@
+<%
+  skills = candidate_profile.job_function.present? ? Onboarding::Skill.where(job_function: candidate_profile.job_function).order(:name) : Onboarding::Skill.none
+%>
+
+<div class="space-y-8">
+  <div>
+    <span class="<%= form_label_class %>">Skills</span>
+    <div class="mt-2" data-controller="nested-fields">
+      <div data-nested-fields-target="list">
+        <%= form.fields_for :candidate_skills do |sf| %>
+          <%= render "onboarding/candidate_profiles/form_pages/candidate_skill_row", f: sf, skills: skills %>
+        <% end %>
+      </div>
+
+      <template data-nested-fields-target="template">
+        <%= form.fields_for :candidate_skills, Onboarding::CandidateSkill.new, child_index: "NEW_RECORD" do |sf| %>
+          <%= render "onboarding/candidate_profiles/form_pages/candidate_skill_row", f: sf, skills: skills %>
+        <% end %>
+      </template>
+
+      <button type="button" data-action="nested-fields#add" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+        + Add skill
+      </button>
+    </div>
+  </div>
+</div>

@@ -19,7 +19,10 @@ module Onboarding
         @user_fields
       end
 
-      # Per-page validation hook — not wired up yet, lands in a later pass.
+      # Per-page validation hook, invoked by CandidateProfile#run_current_page_validation when the
+      # model is validated/saved under this page's context (its `key`). Subclasses override to add
+      # errors directly onto candidate_profile (and/or candidate_profile.user, for pages that own
+      # user_fields). Base implementation is a no-op, for pages with nothing to enforce yet.
       def validate(_candidate_profile)
         true
       end

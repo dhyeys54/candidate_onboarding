@@ -118,6 +118,106 @@ class Onboarding::CvParsing::FieldExtractorTest < ActiveSupport::TestCase
     assert_equal({}, extract(""))
   end
 
+  test "extracts one education entry with institution, study, level and dates" do
+    text = "Education\n2015 - 2019 Bachelor of Dentistry, University of Amsterdam\n\nContact\nEmail: jane@example.com\n"
+    result = extract(text)
+
+    entry = result[:education_entries].value.first
+    assert_equal "University of Amsterdam", entry[:institution]
+    assert_equal "Bachelor of Dentistry", entry[:study]
+    assert_equal :bachelor, entry[:level]
+    assert_equal Date.new(2015, 1, 1), entry[:start_date]
+    assert_equal Date.new(2019, 1, 1), entry[:end_date]
+    assert_equal :low, result[:education_entries].confidence
+  end
+
+  test "extracts multiple education entries from a Dutch section heading" do
+    text = "Opleiding\n2010 - 2014 MBO Tandartsassistente, ROC Amsterdam\n2014 - 2018 HBO Mondzorgkunde, Hogeschool Utrecht\n\nWerkervaring\nSome job\n"
+    result = extract(text)
+
+    entries = result[:education_entries].value
+    assert_equal 2, entries.size
+    assert_equal :mbo, entries[0][:level]
+    assert_equal :hbo, entries[1][:level]
+  end
+
+  test "does not extract education entries when there is no education section" do
+    result = extract("Contact\nEmail: jane@example.com\n")
+
+    assert_not result.key?(:education_entries)
+  end
+
+  test "extracts one work experience entry with job title, company, dates and responsibilities" do
+    text = "Werkervaring\n2019 - 2022 Dentist, Smile Clinic Amsterdam\n" \
+           "Treated patients and managed schedules\n\nOpleiding\nSome study\n"
+    result = extract(text)
+
+    entry = result[:work_experience_entries].value.first
+    assert_equal "Dentist", entry[:job_title]
+    assert_equal "Smile Clinic Amsterdam", entry[:company_name]
+    assert_equal "Treated patients and managed schedules", entry[:responsibilities]
+    assert_equal Date.new(2019, 1, 1), entry[:start_date]
+    assert_equal Date.new(2022, 1, 1), entry[:end_date]
+    assert_not entry[:current_job]
+    assert_equal :low, result[:work_experience_entries].confidence
+  end
+
+  test "extracts multiple work experience entries, not just the most recent employer" do
+    text = "Werkervaring\n2019 - 2022 Dentist, Smile Clinic Amsterdam\n" \
+           "2015 - 2018 Junior Dentist, Tandartspraktijk Utrecht\n\nOpleiding\nSome study\n"
+    result = extract(text)
+
+    entries = result[:work_experience_entries].value
+    assert_equal 2, entries.size
+    assert_equal "Smile Clinic Amsterdam", entries[0][:company_name]
+    assert_equal "Tandartspraktijk Utrecht", entries[1][:company_name]
+  end
+
+  test "marks a work experience entry with a present-tense end date as the current job" do
+    text = "Experience\n2020 - present General Dentist at Dental Clinic Utrecht\n"
+    result = extract(text)
+
+    entry = result[:work_experience_entries].value.first
+    assert_equal "General Dentist", entry[:job_title]
+    assert_equal "Dental Clinic Utrecht", entry[:company_name]
+    assert_nil entry[:end_date]
+    assert entry[:current_job]
+  end
+
+  test "does not extract work experience entries when there is no experience section" do
+    result = extract("Contact\nEmail: jane@example.com\n")
+
+    assert_not result.key?(:work_experience_entries)
+  end
+
+  test "extracts comma-separated skill names from a labeled section" do
+    text = "Skills\nEndodontics, Restorative dentistry, Pediatric dentistry\n\nContact\nEmail: jane@example.com\n"
+    result = extract(text)
+
+    assert_equal [ "Endodontics", "Restorative dentistry", "Pediatric dentistry" ], result[:skill_names].value
+    assert_equal :low, result[:skill_names].confidence
+  end
+
+  test "extracts skills listed one per line under a Dutch heading" do
+    text = "Vaardigheden\nSterilisatie\nPreventie\n\nContact\nEmail: jane@example.com\n"
+    result = extract(text)
+
+    assert_equal [ "Sterilisatie", "Preventie" ], result[:skill_names].value
+  end
+
+  test "deduplicates skill names case-insensitively" do
+    text = "Skills\nScaling, scaling, Patient education\n"
+    result = extract(text)
+
+    assert_equal [ "Scaling", "Patient education" ], result[:skill_names].value
+  end
+
+  test "does not extract skills when there is no skills section" do
+    result = extract("Contact\nEmail: jane@example.com\n")
+
+    assert_not result.key?(:skill_names)
+  end
+
   test "extracts a plausible set of fields from a real resume PDF" do
     text = Onboarding::CvParsing::TextExtractor.new(
       content_type: "application/pdf",

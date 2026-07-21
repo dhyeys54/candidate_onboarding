@@ -1,0 +1,21 @@
+<div class="space-y-8">
+  <div>
+    <%= field_label(form, :suggested_summary, text: "Suggested professional summary", candidate_profile: candidate_profile) %>
+    <%= form.text_area :suggested_summary, rows: 4, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :motivation_for_employer, "Motivation for employer", class: form_label_class %>
+    <%= form.text_area :motivation_for_employer, rows: 3, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :reason_for_change, "Reason for looking for something new", class: form_label_class %>
+    <%= form.text_field :reason_for_change, class: form_input_class %>
+  </div>
+
+  <div>
+    <%= form.label :internal_notes, "Internal notes for recruitment team", class: form_label_class %>
+    <%= form.text_area :internal_notes, rows: 3, class: form_input_class %>
+  </div>
+</div>

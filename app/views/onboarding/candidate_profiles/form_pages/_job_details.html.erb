@@ -1,25 +1,62 @@
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
   <div>
-    <%= field_label(form, :job_function, candidate_profile: candidate_profile) %>
+    <%= field_label(form, :job_function, text: "Desired job function", candidate_profile: candidate_profile, required: true) %>
     <%= form.select :job_function,
           Onboarding::CandidateProfile.job_functions.keys.map { |key| [ key.humanize, key ] },
-          { include_blank: true }, class: form_input_class %>
+          { include_blank: true }, class: form_input_class(candidate_profile, :job_function) %>
+    <%= field_errors(candidate_profile, :job_function) %>
+  </div>
+</div>
+
+<h3 class="mt-8 text-base font-semibold text-gray-900">Job preferences</h3>
+<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div class="sm:col-span-2">
+    <span class="<%= form_label_class %>">Preferred regions<span class="text-red-500"> *</span></span>
+    <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <% Onboarding::CandidateProfile::REGIONS.each do |region| %>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= check_box_tag "candidate_profile[regions][]", region, candidate_profile.regions.include?(region),
+                id: "candidate_profile_regions_#{region}", class: "rounded border-gray-300" %>
+          <%= region.humanize %>
+        </label>
+      <% end %>
+      <%= hidden_field_tag "candidate_profile[regions][]", "" %>
+    </div>
+    <%= field_errors(candidate_profile, :regions) %>
   </div>
 
   <div>
-    <%= form.label :years_of_experience, class: form_label_class %>
-    <%= form.number_field :years_of_experience, min: 0, class: form_input_class %>
+    <%= field_label(form, :max_travel_time_minutes, text: "Maximum travel time (minutes)", candidate_profile: candidate_profile, required: true) %>
+    <%= form.number_field :max_travel_time_minutes, min: 0, class: form_input_class(candidate_profile, :max_travel_time_minutes) %>
+    <%= field_errors(candidate_profile, :max_travel_time_minutes) %>
   </div>
 
   <div>
-    <%= form.label :big_registration_status, class: form_label_class %>
-    <%= form.select :big_registration_status,
-          Onboarding::CandidateProfile.big_registration_statuses.keys.map { |key| [ key.humanize, key ] },
-          { include_blank: true }, class: form_input_class %>
+    <%= field_label(form, :search_status, candidate_profile: candidate_profile, required: true) %>
+    <%= form.select :search_status,
+          Onboarding::CandidateProfile.search_statuses.keys.map { |key| [ key.humanize, key ] },
+          { include_blank: true }, class: form_input_class(candidate_profile, :search_status) %>
+    <%= field_errors(candidate_profile, :search_status) %>
   </div>
 
-  <div>
-    <%= field_label(form, :big_number, candidate_profile: candidate_profile) %>
-    <%= form.text_field :big_number, class: form_input_class %>
+  <div class="sm:col-span-2">
+    <span class="<%= form_label_class %>">Transport type</span>
+    <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <% Onboarding::CandidateProfile::TRANSPORT_TYPES.each do |transport_type| %>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= check_box_tag "candidate_profile[transport_types][]", transport_type, candidate_profile.transport_types.include?(transport_type),
+                id: "candidate_profile_transport_types_#{transport_type}", class: "rounded border-gray-300" %>
+          <%= transport_type.humanize %>
+        </label>
+      <% end %>
+      <%= hidden_field_tag "candidate_profile[transport_types][]", "" %>
+    </div>
+    <%= field_errors(candidate_profile, :transport_types) %>
+  </div>
+
+  <div class="sm:col-span-2">
+    <%= field_label(form, :reason_for_looking, candidate_profile: candidate_profile) %>
+    <%= form.text_area :reason_for_looking, rows: 3, class: form_input_class(candidate_profile, :reason_for_looking) %>
+    <%= field_errors(candidate_profile, :reason_for_looking) %>
   </div>
 </div>

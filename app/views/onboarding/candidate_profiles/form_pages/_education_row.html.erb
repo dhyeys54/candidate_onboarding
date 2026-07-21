@@ -4,25 +4,26 @@
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <div>
-      <%= f.label :study, class: form_label_class %>
-      <%= f.text_field :study, class: form_input_class %>
-    </div>
-
-    <div>
       <%= f.label :institution, class: form_label_class %>
       <%= f.text_field :institution, class: form_input_class %>
     </div>
 
     <div>
-      <%= f.label :level, class: form_label_class %>
-      <%= f.select :level,
-            Onboarding::Education.levels.keys.map { |key| [ key.humanize, key ] },
-            { include_blank: true }, class: form_input_class %>
+      <%= f.label :study, "Study / course", class: form_label_class %>
+      <%= f.text_field :study, class: form_input_class(f.object, :study) %>
+      <%= field_errors(f.object, :study) %>
     </div>
 
     <div>
-      <%= f.label :location, class: form_label_class %>
+      <%= f.label :location, "City and country", class: form_label_class %>
       <%= f.text_field :location, class: form_input_class %>
+    </div>
+
+    <div>
+      <%= f.label :level, class: form_label_class %>
+      <%= f.select :level,
+            Onboarding::Education.levels.keys.map { |key| [ Onboarding::Education::LEVEL_LABELS.fetch(key, key.humanize), key ] },
+            { include_blank: true }, class: form_input_class %>
     </div>
 
     <div>

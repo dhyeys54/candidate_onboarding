@@ -15,3 +15,8 @@ prevention_assistant_skill:
   name: Prevention
   job_function: dental_assistant
   active: true
+
+dental_technician_prosthetics:
+  name: Prosthetics
+  job_function: dental_technician
+  active: true

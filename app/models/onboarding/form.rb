@@ -6,12 +6,12 @@ module Onboarding
     PAGES = [
       Onboarding::FormPages::PersonalDetailsPage,
       Onboarding::FormPages::JobDetailsPage,
-      Onboarding::FormPages::LogisticsPage,
       Onboarding::FormPages::CompensationPage,
-      Onboarding::FormPages::AvailabilityPage,
       Onboarding::FormPages::EducationPage,
       Onboarding::FormPages::WorkExperiencePage,
-      Onboarding::FormPages::SkillsAndSummaryPage
+      Onboarding::FormPages::SkillsPage,
+      Onboarding::FormPages::AvailabilityPage,
+      Onboarding::FormPages::AdditionalInformationPage
     ].freeze
 
     attr_reader :candidate_profile, :page

@@ -22,6 +22,18 @@
   <%= form_with model: @candidate_profile, url: onboarding_candidate_profile_path(@candidate_profile), method: :patch, scope: :candidate_profile do |form| %>
     <%= hidden_field_tag :page, @form.page.key %>
 
+    <% error_messages = form_error_messages(@candidate_profile) %>
+    <% if error_messages.any? %>
+      <div class="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+        <p class="text-sm font-medium text-red-800">Please fix the following before continuing:</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
+          <% error_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
     <div class="mt-6 rounded-xl border border-gray-200 p-6">
       <%= render @form.page.partial, form: form, candidate_profile: @candidate_profile %>
     </div>

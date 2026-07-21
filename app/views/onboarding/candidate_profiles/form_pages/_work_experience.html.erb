@@ -1,6 +1,6 @@
 <div data-controller="nested-fields">
   <div data-nested-fields-target="list">
-    <% form.fields_for :work_experiences do |wf| %>
+    <%= form.fields_for :work_experiences do |wf| %>
       <%= render "onboarding/candidate_profiles/form_pages/work_experience_row", f: wf %>
     <% end %>
   </div>
