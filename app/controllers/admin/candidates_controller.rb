@@ -14,7 +14,9 @@ module Admin
     private
 
     def set_candidate_profile
-      @candidate_profile = submitted_candidate_profiles.find(params[:id])
+      @candidate_profile = submitted_candidate_profiles
+        .includes(:user, :educations, :work_experiences, candidate_skills: :skill, candidate_languages: :language)
+        .find(params[:id])
     end
 
     def submitted_candidate_profiles

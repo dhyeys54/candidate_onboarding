@@ -30,4 +30,75 @@
     <%= link_to "Download CV", admin_candidate_cv_path(@candidate_profile),
           class: "mt-6 inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500" %>
   <% end %>
+
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold text-gray-900">Education</h2>
+    <% if @candidate_profile.educations.any? %>
+      <ul class="mt-3 space-y-3">
+        <% @candidate_profile.educations.each do |education| %>
+          <li class="rounded-lg border border-gray-200 p-4 text-sm">
+            <p class="font-medium text-gray-900">
+              <%= education.study %><%= " — #{Onboarding::Education::LEVEL_LABELS.fetch(education.level, education.level.humanize)}" if education.level.present? %>
+            </p>
+            <p class="mt-1 text-gray-500">
+              <%= [ education.institution, education.location ].compact_blank.join(", ").presence || "—" %>
+            </p>
+            <p class="mt-1 text-gray-500"><%= education.start_date&.to_fs(:long) %> – <%= education.end_date&.to_fs(:long) || "—" %></p>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-3 text-sm text-gray-500">—</p>
+    <% end %>
+  </div>
+
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold text-gray-900">Work experience</h2>
+    <% if @candidate_profile.work_experiences.any? %>
+      <ul class="mt-3 space-y-3">
+        <% @candidate_profile.work_experiences.each do |work_experience| %>
+          <li class="rounded-lg border border-gray-200 p-4 text-sm">
+            <p class="font-medium text-gray-900"><%= work_experience.job_title %> at <%= work_experience.company_name %></p>
+            <p class="mt-1 text-gray-500">
+              <%= work_experience.start_date&.to_fs(:long) %> –
+              <%= work_experience.current_job? ? "Present" : (work_experience.end_date&.to_fs(:long) || "—") %>
+            </p>
+            <p class="mt-1 text-gray-700"><%= work_experience.responsibilities %></p>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-3 text-sm text-gray-500">—</p>
+    <% end %>
+  </div>
+
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold text-gray-900">Skills</h2>
+    <% if @candidate_profile.candidate_skills.any? %>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <% @candidate_profile.candidate_skills.each do |candidate_skill| %>
+          <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+            <%= candidate_skill.skill&.name || candidate_skill.suggested_name %>
+          </span>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="mt-3 text-sm text-gray-500">—</p>
+    <% end %>
+  </div>
+
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold text-gray-900">Languages</h2>
+    <% if @candidate_profile.candidate_languages.any? %>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <% @candidate_profile.candidate_languages.each do |candidate_language| %>
+          <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+            <%= candidate_language.language.name %> (<%= candidate_language.proficiency.humanize %>)
+          </span>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="mt-3 text-sm text-gray-500">—</p>
+    <% end %>
+  </div>
 </div>
