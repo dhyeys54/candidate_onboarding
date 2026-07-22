@@ -1,6 +1,4 @@
 module Admin
-  # Streams a submitted candidate's CV bytes through the app (same proxy-download approach as
-  # Onboarding::CandidateDocumentsController) rather than redirecting to an Active Storage blob URL.
   class CandidateDocumentsController < BaseController
     before_action :set_candidate_profile
     before_action :set_candidate_document

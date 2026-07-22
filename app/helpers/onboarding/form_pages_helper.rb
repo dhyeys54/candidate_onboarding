@@ -91,6 +91,15 @@ module Onboarding
       own + candidate_profile.user.errors.full_messages
     end
 
+    # Value to render into a user_fields (first_name/last_name/email) input: blank instead of the
+    # guest placeholder Onboarding::CreateGuestCandidateProfileService seeds at upload time, whether
+    # CV parsing hasn't run yet or ran and failed/couldn't extract this field. Without this, the
+    # candidate would see "Guest"/"Candidate"/a guest-*@... address sitting in the field as if it
+    # were real data instead of an empty field to fill in.
+    def identity_field_value(user, field)
+      user.guest_placeholder?(field) ? nil : user.public_send(field)
+    end
+
     # Small badge shown next to a field CvParsing::ProfileMapper pre-filled, so the candidate can
     # see what came from their CV vs. what they typed. candidate_profile.extracted_fields maps
     # field name => confidence ("high"/"low"), stamped by ProfileMapper#apply_profile_fields.

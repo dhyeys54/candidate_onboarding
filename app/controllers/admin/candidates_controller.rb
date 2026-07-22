@@ -1,6 +1,4 @@
 module Admin
-  # Lists candidates who have finished onboarding — drafts mid-flow aren't recruiter-relevant yet
-  # and are excluded so recruiters never see partially-entered data.
   class CandidatesController < BaseController
     before_action :set_candidate_profile, only: :show
 

@@ -1,7 +1,4 @@
 module Onboarding
-  # Streams the candidate's own CV bytes through the app rather than redirecting to an Active
-  # Storage blob URL — no signed link is ever generated or shown to the browser, so there's nothing
-  # to leak or share independently of this authorization check.
   class CandidateDocumentsController < ApplicationController
     include Onboarding::CandidateAuthorization
 

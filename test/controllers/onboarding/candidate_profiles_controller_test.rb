@@ -90,6 +90,34 @@ class Onboarding::CandidateProfilesControllerTest < ActionDispatch::IntegrationT
                    "option[selected][value=?]", language.id.to_s
   end
 
+  test "edit renders blank first_name/last_name/email while the user is still the guest placeholder" do
+    profile = @profile
+    assert profile.user.guest_placeholder?(:first_name)
+    assert profile.user.guest_placeholder?(:last_name)
+    assert profile.user.guest_placeholder?(:email)
+
+    get edit_onboarding_candidate_profile_path(profile, page: "personal_details")
+
+    assert_response :success
+    %w[first_name last_name email].each do |field|
+      assert_select "input[name='candidate_profile[user_attributes][#{field}]']" do |elements|
+        assert_nil elements.first["value"], "expected #{field} to render with no value attribute (blank)"
+      end
+    end
+  end
+
+  test "edit renders the candidate's real first_name/last_name/email once set" do
+    profile = @profile
+    profile.user.update!(first_name: "Jane", last_name: "Doe", email: "jane.doe@example.com")
+
+    get edit_onboarding_candidate_profile_path(profile, page: "personal_details")
+
+    assert_response :success
+    assert_select "input[name='candidate_profile[user_attributes][first_name]'][value=?]", "Jane"
+    assert_select "input[name='candidate_profile[user_attributes][last_name]'][value=?]", "Doe"
+    assert_select "input[name='candidate_profile[user_attributes][email]'][value=?]", "jane.doe@example.com"
+  end
+
   test "update saves the current page's fields and advances to the next page" do
     profile = @profile
 

@@ -4,19 +4,22 @@
   <%= form.fields_for :user, candidate_profile.user do |uf| %>
     <div>
       <%= field_label(uf, :first_name, candidate_profile: candidate_profile, required: true) %>
-      <%= uf.text_field :first_name, class: form_input_class(candidate_profile.user, :first_name) %>
+      <%= uf.text_field :first_name, value: identity_field_value(candidate_profile.user, :first_name),
+            class: form_input_class(candidate_profile.user, :first_name) %>
       <%= field_errors(candidate_profile.user, :first_name) %>
     </div>
 
     <div>
       <%= field_label(uf, :last_name, candidate_profile: candidate_profile, required: true) %>
-      <%= uf.text_field :last_name, class: form_input_class(candidate_profile.user, :last_name) %>
+      <%= uf.text_field :last_name, value: identity_field_value(candidate_profile.user, :last_name),
+            class: form_input_class(candidate_profile.user, :last_name) %>
       <%= field_errors(candidate_profile.user, :last_name) %>
     </div>
 
     <div class="sm:col-span-2">
       <%= field_label(uf, :email, candidate_profile: candidate_profile, required: true) %>
-      <%= uf.email_field :email, class: form_input_class(candidate_profile.user, :email) %>
+      <%= uf.email_field :email, value: identity_field_value(candidate_profile.user, :email),
+            class: form_input_class(candidate_profile.user, :email) %>
       <%= field_errors(candidate_profile.user, :email) %>
     </div>
   <% end %>

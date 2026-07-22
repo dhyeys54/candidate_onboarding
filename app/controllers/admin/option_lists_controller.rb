@@ -1,10 +1,6 @@
 module Admin
   # Shared CRUD shape for the admin-managed onboarding option lists (job functions, regions,
-  # employment types, skills, languages) — these were hardcoded Ruby constants/enums until now (see
-  # Onboarding::JobFunction/Region/EmploymentType), so recruiters can no longer add or retire a value
-  # without a code deploy. Concrete subclasses just declare resource_class/permitted_attributes/
-  # index_path; this class owns the five actions and their shared error handling. Abstract — not
-  # routed directly.
+  # employment types, skills, languages)
   class OptionListsController < BaseController
     before_action :set_resource, only: %i[edit update destroy]
 

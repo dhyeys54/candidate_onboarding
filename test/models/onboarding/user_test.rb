@@ -34,4 +34,21 @@ class Onboarding::UserTest < ActiveSupport::TestCase
 
     assert_equal onboarding_candidate_profiles(:draft_profile), onboarding_user.candidate_profile
   end
+
+  test "guest_placeholder? is true for the seeded guest first_name/last_name/email" do
+    user = Onboarding::User.new(first_name: "Guest", last_name: "Candidate",
+                                 email: "guest-#{SecureRandom.uuid}@guest.dentalonboarding.invalid")
+
+    assert user.guest_placeholder?(:first_name)
+    assert user.guest_placeholder?(:last_name)
+    assert user.guest_placeholder?(:email)
+  end
+
+  test "guest_placeholder? is false once real identity values are set" do
+    user = Onboarding::User.new(first_name: "Alex", last_name: "Doe", email: "alex.doe@example.com")
+
+    assert_not user.guest_placeholder?(:first_name)
+    assert_not user.guest_placeholder?(:last_name)
+    assert_not user.guest_placeholder?(:email)
+  end
 end

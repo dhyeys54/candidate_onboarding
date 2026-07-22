@@ -14,7 +14,6 @@ module Onboarding
       WORK_EXPERIENCE_ENTRIES_FIELD = :work_experience_entries
       SKILL_NAMES_FIELD = :skill_names
       LANGUAGE_NAMES_FIELD = :language_names
-      GUEST_EMAIL_PATTERN = /\Aguest-[0-9a-f-]{36}@guest\.dentalonboarding\.invalid\z/
 
       def initialize(candidate_document, extracted_fields)
         @candidate_document = candidate_document
@@ -68,11 +67,7 @@ module Onboarding
       end
 
       def user_field_blank?(field)
-        case field
-        when :first_name then user.first_name == "Guest"
-        when :last_name then user.last_name == "Candidate"
-        when :email then user.email.match?(GUEST_EMAIL_PATTERN)
-        end
+        user.guest_placeholder?(field)
       end
 
       # job_function is handled separately from the generic PROFILE_FIELDS loop because the extracted

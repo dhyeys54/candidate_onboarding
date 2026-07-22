@@ -1,5 +1,5 @@
 module Onboarding
-  # Guest candidates aren't logged in — the browser's session cookie holds an opaque token that
+  # Guest candidates aren't logged in — the browser's session cookie holds a token that
   # must match the profile's own session_token. Checked on every request rather than trusted once,
   # so a leaked/guessed :id in the URL alone never grants access to another candidate's data or CV.
   # Include and add `before_action :authorize_candidate!` *after* whatever before_action sets
