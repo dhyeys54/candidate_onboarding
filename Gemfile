@@ -31,7 +31,7 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 # Background job processing backed by Redis [https://github.com/sidekiq/sidekiq]
 gem "sidekiq", "~> 8.1"
 # Redis client, also used for Rails.cache and Action Cable [https://github.com/redis/redis-rb]
-gem "redis", "~> 5.4"
+gem "redis", "~> 6.0"
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
